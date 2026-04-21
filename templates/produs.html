@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+{% block title %}{{ produs.nume }} - PriceTracker{% endblock %}
+
+{% block content %}
+<div class="produs-page">
+    <div class="produs-header">
+        <div class="produs-poza">
+            {% if produs['poza'] %}
+            <img src="{{ produs['poza'] }}" alt="{{ produs['nume'] }}">
+            {% else %}
+            <div class="no-img-large">📦</div>
+            {% endif %}
+        </div>
+        
+        <div class="produs-detalii">
+            <h1>{{ produs['nume'] }}</h1>
+            <p class="pret-curent">{{ produs['pret_curent'] }} Lei</p>
+            <p class="pret-info">
+                Min: <strong>{{ pret_min }} Lei</strong> | 
+                Max: <strong>{{ pret_max }} Lei</strong>
+            </p>
+            
+            <div class="butoane">
+                <a href="{{ produs['link'] }}" target="_blank" class="btn-emag">
+                    🛒 Cumpără pe eMAG
+                </a>
+                <button onclick="toggleAlerta()" class="btn-alerta">
+                    🔔 Setează alertă
+                </button>
+            </div>
+            
+            <div id="forma-alerta" class="forma-alerta" style="display:none">
+                <h3>Alertă de preț</h3>
+                <input type="email" id="email" placeholder="Email-ul tău">
+                <input type="number" id="pret-dorit" 
+                       placeholder="Preț dorit (Lei)"
+                       value="{{ pret_min }}">
+                <button onclick="salveazaAlerta({{ produs['id'] }})">
+                    Salvează alerta
+                </button>
+                <p id="alerta-msg"></p>
+            </div>
+        </div>
+    </div>
+    
+    {% if istoric|length > 1 %}
+    <div class="grafic-section">
+        <h2>📈 Istoric prețuri</h2>
+        <canvas id="graficPret"></canvas>
+    </div>
+    
+    <script>
+        const istoric = {{ istoric|tojson }};
+        const ctx = document.getElementById('graficPret').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: istoric.map(r => r.data),
+                datasets: [{
+                    label: 'Preț (Lei)',
+                    data: istoric.map(r => r.pret),
+                    borderColor: '#005EB8',
+                    backgroundColor: 'rgba(0,94,184,0.1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    </script>
+    {% else %}
+    <p class="no-istoric">Istoricul se va construi în timp. Revino mâine!</p>
+    {% endif %}
+</div>
+{% endblock %}

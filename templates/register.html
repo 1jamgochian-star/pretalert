@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div style="max-width:400px;margin:60px auto;background:#1a1d2e;padding:2rem;border-radius:12px;border:1px solid #2d3148;">
+    <h2 style="color:#fff;margin-bottom:1.5rem;text-align:center;">📝 Cont nou</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div style="padding:0.7rem;margin-bottom:1rem;border-radius:8px;background:{% if category=='error' %}#ff4444{% else %}#00b894{% endif %};color:#fff;">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Nume utilizator" required
+            style="width:100%;padding:0.8rem;margin-bottom:1rem;background:#0f1117;border:1px solid #2d3148;border-radius:8px;color:#fff;box-sizing:border-box;">
+        <input type="email" name="email" placeholder="Email" required
+            style="width:100%;padding:0.8rem;margin-bottom:1rem;background:#0f1117;border:1px solid #2d3148;border-radius:8px;color:#fff;box-sizing:border-box;">
+        <input type="password" name="password" placeholder="Parolă" required
+            style="width:100%;padding:0.8rem;margin-bottom:1.5rem;background:#0f1117;border:1px solid #2d3148;border-radius:8px;color:#fff;box-sizing:border-box;">
+        <button type="submit"
+            style="width:100%;padding:0.8rem;background:#6c63ff;color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;">
+            Creează cont
+        </button>
+    </form>
+
+    <a href="/login/google" style="display:block;text-align:center;padding:0.8rem;margin:1rem 0 0.8rem;background:#fff;color:#333;border-radius:8px;text-decoration:none;font-weight:500;">
+        🔵 Înregistrare cu Google
+    </a>
+    <a href="/login/facebook" style="display:block;text-align:center;padding:0.8rem;background:#1877f2;color:#fff;border-radius:8px;text-decoration:none;font-weight:500;">
+        📘 Înregistrare cu Facebook
+    </a>
+
+    <p style="text-align:center;margin-top:1.5rem;color:#888;">
+        Ai deja cont? <a href="/login" style="color:#6c63ff;">Autentifică-te</a>
+    </p>
+</div>
+{% endblock %}

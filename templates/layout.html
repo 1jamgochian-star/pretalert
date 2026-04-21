@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PretAlert.ro{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+    <header>
+    <a href="/" class="logo">
+        <img src="/static/logo.png" alt="PretAlert.ro" style="height: 120px; width: auto; margin-top: -35px; margin-bottom: -35px;">
+    </a>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:0.8rem;">
+        {% if current_user.is_authenticated %}
+            <span style="color:#aaa;font-size:0.9rem;">👤 {{ current_user.username }}</span>
+            <a href="/logout" style="padding:0.4rem 1rem;background:#ff4444;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Ieși</a>
+        {% else %}
+            <a href="/login" style="padding:0.4rem 1rem;background:#2d3148;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Login</a>
+            <a href="/register" style="padding:0.4rem 1rem;background:#6c63ff;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Cont nou</a>
+        {% endif %}
+    </div>
+</header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <p>© 2025 PretAlert.ro — Monitorizare prețuri România</p>
+    </footer>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

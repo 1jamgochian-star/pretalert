@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% block title %}Caută produse - PriceTracker{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Monitorizează prețurile din România</h1>
+    <p>Găsește cel mai bun preț și primește alerte când prețul scade</p>
+    
+    <form action="/" method="GET" class="search-form">
+        <input type="text" name="q" value="{{ query }}" 
+               placeholder="Caută un produs... ex: Samsung Galaxy Watch" 
+               class="search-input" autofocus>
+        <button type="submit" class="search-btn">🔍 Caută</button>
+    </form>
+</section>
+
+{% if query %}
+<section class="rezultate">
+    <h2>{{ produse|length }} rezultate pentru „{{ query }}"</h2>
+    
+    {% if produse %}
+    <div class="produse-grid">
+        {% for p in produse %}
+        <a href="/produs/{{ p.id }}" class="card-produs">
+            <div class="card-poza">
+                {% if p.poza %}
+                <img src="{{ p.poza }}" alt="{{ p.nume }}" loading="lazy">
+                {% else %}
+                <div class="no-img">📦</div>
+                {% endif %}
+            </div>
+            <div class="card-info">
+                <h3>{{ p.nume[:60] }}{% if p.nume|length > 60 %}...{% endif %}</h3>
+                <p class="pret">{{ p.pret_text if p.pret_text else p.pret ~ ' Lei' }}</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="no-results">Niciun produs găsit. Încearcă altă căutare.</p>
+    {% endif %}
+</section>
+{% else %}
+<section class="features">
+    <div class="feature">
+        <span>📊</span>
+        <h3>Istoric prețuri</h3>
+        <p>Urmărește evoluția prețului în timp</p>
+    </div>
+    <div class="feature">
+        <span>🔔</span>
+        <h3>Alerte email</h3>
+        <p>Primești notificare când prețul scade</p>
+    </div>
+    <div class="feature">
+        <span>🛒</span>
+        <h3>Comparare magazine</h3>
+        <p>Găsești cel mai mic preț</p>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
