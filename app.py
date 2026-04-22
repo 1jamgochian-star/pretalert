@@ -10,7 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'pricetracker2025secret')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'pricetracker2025secret2026')
+app.config['REMEMBER_COOKIE_DURATION'] = 2592000
 app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
 app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
 app.config['FACEBOOK_CLIENT_ID'] = os.getenv('FACEBOOK_CLIENT_ID')
@@ -47,7 +48,12 @@ def index():
     query = request.args.get('q', '')
     produse = []
     if query:
-        produse = salveaza_rezultate(asyncio.run(cauta_toate(query)))
+        try:
+            rezultate = asyncio.run(cauta_emag(query))
+            produse = salveaza_rezultate(rezultate[:20])
+        except Exception as e:
+            print(f"Eroare cautare: {e}")
+            flash('Eroare la cautare, incearca din nou!', 'error')
     return render_template('index.html', produse=produse, query=query)
 
 @app.route('/produs/<int:produs_id>')
@@ -58,7 +64,7 @@ def produs(produs_id):
     if current_user.is_authenticated:
         salveaza_vizita(current_user.id, produs_id)
     istoric = get_istoric(produs_id)
-    istoric_json = [{"data": row['data'][:10], "pret": row['pret']} for row in istoric]
+    istoric_json = [{"data": str(row['data'])[:10], "pret": row['pret']} for row in istoric]
     pret_min = min((r['pret'] for r in istoric_json), default=0)
     pret_max = max((r['pret'] for r in istoric_json), default=0)
     urmarit = este_urmarit(current_user.id, produs_id) if current_user.is_authenticated else False
@@ -69,14 +75,14 @@ def produs(produs_id):
 @login_required
 def urmareste(produs_id):
     urmareste_produs(current_user.id, produs_id)
-    flash('Produs urmărit!', 'success')
+    flash('Produs urmarit!', 'success')
     return redirect(url_for('produs', produs_id=produs_id))
 
 @app.route('/sterge-urmarire/<int:produs_id>')
 @login_required
 def sterge_urmarire_route(produs_id):
     sterge_urmarire(current_user.id, produs_id)
-    flash('Urmărire ștearsă!', 'success')
+    flash('Urmarire stearsa!', 'success')
     return redirect(url_for('produs', produs_id=produs_id))
 
 @app.route('/profil')
@@ -91,7 +97,7 @@ def profil():
 @login_required
 def sterge_alerta_route(alerta_id):
     sterge_alerta(alerta_id, current_user.email)
-    flash('Alertă ștearsă!', 'success')
+    flash('Alerta stearsa!', 'success')
     return redirect(url_for('profil'))
 
 @app.route('/profil/username', methods=['POST'])
@@ -112,7 +118,7 @@ def schimba_parola_route():
         return redirect(url_for('profil'))
     pw_hash = bcrypt.generate_password_hash(parola_noua).decode('utf-8')
     schimba_parola(current_user.id, pw_hash)
-    flash('Parola schimbată cu succes!', 'success')
+    flash('Parola schimbata cu succes!', 'success')
     return redirect(url_for('profil'))
 
 @app.route('/alerta', methods=['POST'])
