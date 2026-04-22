@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
-from flask_login import current_user
-from database import init_db, get_produs, get_istoric, salveaza_alerta
+from flask_login import current_user, login_required
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite
 from scraper import cauta_emag, cauta_toate, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
@@ -10,17 +10,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.config['SECRET_KEY'] = 'pricetracker2025secret'
-
-# Google OAuth
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'pricetracker2025secret')
 app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
 app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
-
-# Facebook OAuth
 app.config['FACEBOOK_CLIENT_ID'] = os.getenv('FACEBOOK_CLIENT_ID')
 app.config['FACEBOOK_CLIENT_SECRET'] = os.getenv('FACEBOOK_CLIENT_SECRET')
 
-# Init extensions
 bcrypt.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
@@ -44,27 +39,53 @@ oauth.register(
 )
 
 app.register_blueprint(auth)
-
-# Initializeaza DB
 init_db()
 start_scheduler()
+
 @app.route('/')
 def index():
     query = request.args.get('q', '')
     produse = []
     if query:
-        produse = salveaza_rezultate(asyncio.run(cauta_toate(query)))o
-
+        produse = salveaza_rezultate(asyncio.run(cauta_toate(query)))
     return render_template('index.html', produse=produse, query=query)
 
-from flask_login import login_required, current_user
-from database import get_alerte_user, sterge_alerta, schimba_parola, schimba_username
+@app.route('/produs/<int:produs_id>')
+def produs(produs_id):
+    p = get_produs(produs_id)
+    if not p:
+        return redirect(url_for('index'))
+    if current_user.is_authenticated:
+        salveaza_vizita(current_user.id, produs_id)
+    istoric = get_istoric(produs_id)
+    istoric_json = [{"data": row['data'][:10], "pret": row['pret']} for row in istoric]
+    pret_min = min((r['pret'] for r in istoric_json), default=0)
+    pret_max = max((r['pret'] for r in istoric_json), default=0)
+    urmarit = este_urmarit(current_user.id, produs_id) if current_user.is_authenticated else False
+    return render_template('produs.html', produs=p, istoric=istoric_json,
+                           pret_min=pret_min, pret_max=pret_max, urmarit=urmarit)
+
+@app.route('/urmareste/<int:produs_id>')
+@login_required
+def urmareste(produs_id):
+    urmareste_produs(current_user.id, produs_id)
+    flash('Produs urmărit!', 'success')
+    return redirect(url_for('produs', produs_id=produs_id))
+
+@app.route('/sterge-urmarire/<int:produs_id>')
+@login_required
+def sterge_urmarire_route(produs_id):
+    sterge_urmarire(current_user.id, produs_id)
+    flash('Urmărire ștearsă!', 'success')
+    return redirect(url_for('produs', produs_id=produs_id))
 
 @app.route('/profil')
 @login_required
 def profil():
     alerte = get_alerte_user(current_user.email)
-    return render_template('profil.html', alerte=alerte)
+    urmarite = get_produse_urmarite(current_user.id)
+    vizite = get_istoric_vizite(current_user.id)
+    return render_template('profil.html', alerte=alerte, urmarite=urmarite, vizite=vizite)
 
 @app.route('/sterge-alerta/<int:alerta_id>')
 @login_required
@@ -78,15 +99,12 @@ def sterge_alerta_route(alerta_id):
 def schimba_username_route():
     username = request.form.get('username')
     schimba_username(current_user.id, username)
-    current_user.username = username
     flash('Username actualizat!', 'success')
     return redirect(url_for('profil'))
 
 @app.route('/profil/parola', methods=['POST'])
 @login_required
 def schimba_parola_route():
-    from flask_bcrypt import Bcrypt
-    bcrypt_inst = Bcrypt()
     parola_noua = request.form.get('parola_noua')
     confirmare = request.form.get('confirmare')
     if parola_noua != confirmare:
@@ -96,18 +114,6 @@ def schimba_parola_route():
     schimba_parola(current_user.id, pw_hash)
     flash('Parola schimbată cu succes!', 'success')
     return redirect(url_for('profil'))
-
-@app.route('/produs/<int:produs_id>')
-def produs(produs_id):
-    p = get_produs(produs_id)
-    if not p:
-        return redirect(url_for('index'))
-    istoric = get_istoric(produs_id)
-    istoric_json = [{"data": row['data'][:10], "pret": row['pret']} for row in istoric]
-    pret_min = min((r['pret'] for r in istoric_json), default=0)
-    pret_max = max((r['pret'] for r in istoric_json), default=0)
-    return render_template('produs.html', produs=p, istoric=istoric_json,
-                           pret_min=pret_min, pret_max=pret_max)
 
 @app.route('/alerta', methods=['POST'])
 def alerta():

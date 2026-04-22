@@ -66,4 +66,39 @@
     </div>
 
 </div>
+<div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;">
+        <h3 style="color:#fff;margin-top:0;">⭐ Produse urmărite ({{ urmarite|length }})</h3>
+        {% if urmarite %}
+            {% for p in urmarite %}
+            <div style="background:#0f1117;border-radius:8px;padding:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;">
+                <img src="{{ p['poza'] }}" style="width:50px;height:50px;object-fit:contain;" onerror="this.style.display='none'">
+                <div style="flex:1;">
+                    <a href="/produs/{{ p['id'] }}" style="color:#fff;text-decoration:none;">{{ p['nume'][:50] }}</a>
+                    <div style="color:#00b894;font-size:0.85rem;">{{ p['pret_curent'] }} RON</div>
+                </div>
+                <a href="/sterge-urmarire/{{ p['id'] }}"
+                   style="background:#ff4444;color:#fff;padding:0.3rem 0.7rem;border-radius:6px;text-decoration:none;font-size:0.8rem;">✕</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:#888;">Nu urmărești niciun produs. <a href="/" style="color:#6c63ff;">Caută produse!</a></p>
+        {% endif %}
+    </div>
+
+    <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;">
+        <h3 style="color:#fff;margin-top:0;">🕐 Vizitate recent ({{ vizite|length }})</h3>
+        {% if vizite %}
+            {% for p in vizite %}
+            <div style="background:#0f1117;border-radius:8px;padding:0.8rem;margin-bottom:0.8rem;display:flex;align-items:center;gap:1rem;">
+                <img src="{{ p['poza'] }}" style="width:40px;height:40px;object-fit:contain;" onerror="this.style.display='none'">
+                <div style="flex:1;">
+                    <a href="/produs/{{ p['id'] }}" style="color:#aaa;text-decoration:none;font-size:0.9rem;">{{ p['nume'][:50] }}</a>
+                    <div style="color:#666;font-size:0.8rem;">{{ p['pret_curent'] }} RON</div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:#888;">Nu ai vizitat niciun produs.</p>
+        {% endif %}
+    </div>
 {% endblock %}

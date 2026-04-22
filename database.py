@@ -51,6 +51,25 @@ def init_db():
         FOREIGN KEY (produs_id) REFERENCES produse(id)
     )''')
 
+    c.execute('''CREATE TABLE IF NOT EXISTS produse_urmarite (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        produs_id INTEGER,
+        data_adaugare TEXT DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, produs_id),
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (produs_id) REFERENCES produse(id)
+    )''')
+
+    c.execute('''CREATE TABLE IF NOT EXISTS istoric_vizite (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        produs_id INTEGER,
+        data_vizita TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (produs_id) REFERENCES produse(id)
+    )''')
+
     conn.commit()
     conn.close()
     print("✅ Baza de date initializata!")
@@ -99,6 +118,62 @@ def salveaza_alerta(produs_id, email, pret_dorit):
                  VALUES (?, ?, ?)''', (produs_id, email, pret_dorit))
     conn.commit()
     conn.close()
+
+def urmareste_produs(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('INSERT OR IGNORE INTO produse_urmarite (user_id, produs_id) VALUES (?,?)',
+              (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def sterge_urmarire(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM produse_urmarite WHERE user_id=? AND produs_id=?',
+              (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def get_produse_urmarite(user_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT p.*, pu.data_adaugare FROM produse p
+                 JOIN produse_urmarite pu ON p.id = pu.produs_id
+                 WHERE pu.user_id=?
+                 ORDER BY pu.data_adaugare DESC''', (user_id,))
+    produse = c.fetchall()
+    conn.close()
+    return produse
+
+def este_urmarit(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT id FROM produse_urmarite WHERE user_id=? AND produs_id=?',
+              (user_id, produs_id))
+    result = c.fetchone()
+    conn.close()
+    return result is not None
+
+def salveaza_vizita(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('INSERT INTO istoric_vizite (user_id, produs_id) VALUES (?,?)',
+              (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def get_istoric_vizite(user_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT DISTINCT p.*, iv.data_vizita FROM produse p
+                 JOIN istoric_vizite iv ON p.id = iv.produs_id
+                 WHERE iv.user_id=?
+                 ORDER BY iv.data_vizita DESC LIMIT 20''', (user_id,))
+    produse = c.fetchall()
+    conn.close()
+    return produse
+
 def get_alerte_user(email):
     conn = get_db()
     c = conn.cursor()
