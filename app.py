@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import current_user
 from database import init_db, get_produs, get_istoric, salveaza_alerta
-from scraper import cauta_emag, scrape_produs, salveaza_rezultate
+from scraper import cauta_emag, cauta_toate, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
 import asyncio
@@ -53,7 +53,8 @@ def index():
     query = request.args.get('q', '')
     produse = []
     if query:
-        produse = salveaza_rezultate(asyncio.run(cauta_emag(query)))
+        produse = salveaza_rezultate(asyncio.run(cauta_toate(query)))o
+
     return render_template('index.html', produse=produse, query=query)
 
 from flask_login import login_required, current_user

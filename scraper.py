@@ -99,7 +99,83 @@ async def scrape_produs(link):
     except Exception as e:
         print(f"Eroare scrape produs: {e}")
         return None
+async def cauta_altex(query):
+    altex_url = f"https://altex.ro/cauta/{query.replace(' ', '-')}/"
+    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={altex_url}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as r:
+                html = await r.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                produse = soup.select('.Product')
+                rezultate = []
+                for p in produse:
+                    nume = p.select_one('.Product-name')
+                    pret = p.select_one('.Price-current')
+                    link = p.select_one('a.Product-name')
+                    if not nume or not pret or not link:
+                        continue
+                    poza = p.select_one('img')
+                    poza_url = poza.get('src') or poza.get('data-src') if poza else None
+                    pret_float = curata_pret(pret.text)
+                    link_url = 'https://altex.ro' + link['href'] if link['href'].startswith('/') else link['href']
+                    rezultate.append({
+                        "emag_id": "altex_" + link_url.split('/')[-2],
+                        "nume": nume.text.strip(),
+                        "pret": pret_float,
+                        "pret_text": pret.text.strip(),
+                        "link": link_url,
+                        "poza": poza_url,
+                        "magazin": "Altex"
+                    })
+                return rezultate
+    except Exception as e:
+        print(f"Eroare Altex: {e}")
+        return []
 
+async def cauta_cel(query):
+    cel_url = f"https://www.cel.ro/cauta/?q={query.replace(' ', '+')}"
+    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={cel_url}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as r:
+                html = await r.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                produse = soup.select('.product-card')
+                rezultate = []
+                for p in produse:
+                    nume = p.select_one('.product-title')
+                    pret = p.select_one('.price')
+                    link = p.select_one('a')
+                    if not nume or not pret or not link:
+                        continue
+                    poza = p.select_one('img')
+                    poza_url = poza.get('src') or poza.get('data-src') if poza else None
+                    pret_float = curata_pret(pret.text)
+                    link_url = 'https://www.cel.ro' + link['href'] if link['href'].startswith('/') else link['href']
+                    rezultate.append({
+                        "emag_id": "cel_" + link_url.split('/')[-2],
+                        "nume": nume.text.strip(),
+                        "pret": pret_float,
+                        "pret_text": pret.text.strip(),
+                        "link": link_url,
+                        "poza": poza_url,
+                        "magazin": "Cel.ro"
+                    })
+                return rezultate
+    except Exception as e:
+        print(f"Eroare Cel.ro: {e}")
+        return []
+
+async def cauta_toate(query):
+    rezultate_emag, rezultate_altex, rezultate_cel = await asyncio.gather(
+        cauta_emag(query),
+        cauta_altex(query),
+        cauta_cel(query)
+    )
+    for r in rezultate_emag:
+        r['magazin'] = 'eMAG'
+    return rezultate_emag + rezultate_altex + rezultate_cel
 def salveaza_rezultate(rezultate):
     produse_salvate = []
     for r in rezultate:
