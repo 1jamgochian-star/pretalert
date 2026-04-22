@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if not DATABASE_URL:
+    import sys
+print(f"DATABASE_URL value: '{DATABASE_URL}'", file=sys.stderr)
+if not DATABASE_URL:
     raise Exception("DATABASE_URL nu este setata!")
 
 def get_db():
