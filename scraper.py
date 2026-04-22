@@ -166,16 +166,54 @@ async def cauta_cel(query):
     except Exception as e:
         print(f"Eroare Cel.ro: {e}")
         return []
-
+async def cauta_flanco(query):
+    flanco_url = f"https://www.flanco.ro/catalogsearch/result/?q={query.replace(' ', '+')}"
+    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={flanco_url}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as r:
+                html = await r.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                produse = soup.select('.product-item-info')
+                rezultate = []
+                for p in produse:
+                    nume = p.select_one('.product-item-link')
+                    pret = p.select_one('.price')
+                    link = p.select_one('a.product-item-photo')
+                    img = p.select_one('img')
+                    if not nume or not pret or not link:
+                        continue
+                    pret_float = curata_pret(pret.text)
+                    link_url = link['href']
+                    poza_url = img['src'] if img else None
+                    # curata poza URL (Flanco foloseste CDN transform)
+                    if poza_url and 'flanco.ro/media' in poza_url:
+                        poza_url = 'https://www.flanco.ro' + poza_url if poza_url.startswith('/') else poza_url
+                    flanco_id = 'flanco_' + link_url.split('/')[-1].replace('.html', '')
+                    rezultate.append({
+                        "emag_id": flanco_id,
+                        "nume": nume.text.strip(),
+                        "pret": pret_float,
+                        "pret_text": pret.text.strip(),
+                        "link": link_url,
+                        "poza": poza_url,
+                        "magazin": "Flanco"
+                    })
+                return rezultate
+    except Exception as e:
+        print(f"Eroare Flanco: {e}")
+        return []
 async def cauta_toate(query):
-    rezultate_emag, rezultate_altex, rezultate_cel = await asyncio.gather(
+    rezultate_emag, rezultate_altex, rezultate_cel, rezultate_flanco = await asyncio.gather(
         cauta_emag(query),
         cauta_altex(query),
-        cauta_cel(query)
+        cauta_cel(query),
+        cauta_flanco(query)
     )
     for r in rezultate_emag:
         r['magazin'] = 'eMAG'
-    return rezultate_emag + rezultate_altex + rezultate_cel
+    return rezultate_emag + rezultate_altex + rezultate_cel + rezultate_flanco
+
 def salveaza_rezultate(rezultate):
     produse_salvate = []
     for r in rezultate:
