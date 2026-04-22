@@ -5,6 +5,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 DATABASE_URL = os.environ.get('DATABASE_URL')
+if not DATABASE_URL:
+    raise Exception("DATABASE_URL nu este setata!")
 
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
