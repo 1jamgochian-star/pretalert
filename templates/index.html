@@ -32,6 +32,9 @@
             <div class="card-info">
                 <h3>{{ p.nume[:60] }}{% if p.nume|length > 60 %}...{% endif %}</h3>
                 <p class="pret">{{ p.pret_text if p.pret_text else p.pret ~ ' Lei' }}</p>
+<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:{% if p.magazin == 'Altex' %}#e63946{% elif p.magazin == 'Cel.ro' %}#2196F3{% else %}#ff6900{% endif %};color:#fff;">
+    {{ p.magazin if p.magazin else 'eMAG' }}
+</span>
             </div>
         </a>
         {% endfor %}
