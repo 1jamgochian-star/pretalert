@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
-DATABASE_URL = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_PUBLIC_URL')
+DATABASE_URL = "postgresql://postgres:jwsMqrNEFqNmBpeiddHvZGixGwCujlrB@postgres.railway.internal:5432/railway"
 if not DATABASE_URL:
     import sys
 print(f"DATABASE_URL value: '{DATABASE_URL}'", file=sys.stderr)
