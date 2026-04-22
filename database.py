@@ -103,6 +103,102 @@ def salveaza_alerta(produs_id, email, pret_dorit):
     conn.commit()
     conn.close()
 
+def get_alerte_user(email):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('''SELECT a.*, p.nume, p.pret_curent, p.link 
+                 FROM alerte a JOIN produse p ON a.produs_id = p.id
+                 WHERE a.email=%s AND a.activa=1''', (email,))
+    alerte = c.fetchall()
+    conn.close()
+    return alerte
+
+def sterge_alerta(alerta_id, email):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM alerte WHERE id=%s AND email=%s', (alerta_id, email))
+    conn.commit()
+    conn.close()
+
+def schimba_parola(user_id, pw_hash):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE users SET password=%s WHERE id=%s', (pw_hash, user_id))
+    conn.commit()
+    conn.close()
+
+def schimba_username(user_id, username):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE users SET username=%s WHERE id=%s', (username, user_id))
+    conn.commit()
+    conn.close()
+
+def urmareste_produs(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS urmariri (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        produs_id INTEGER,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, produs_id)
+    )''')
+    c.execute('INSERT INTO urmariri (user_id, produs_id) VALUES (%s, %s) ON CONFLICT DO NOTHING',
+              (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def sterge_urmarire(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('DELETE FROM urmariri WHERE user_id=%s AND produs_id=%s', (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def get_produse_urmarite(user_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('''SELECT p.* FROM produse p
+                 JOIN urmariri u ON p.id = u.produs_id
+                 WHERE u.user_id=%s
+                 ORDER BY u.data DESC''', (user_id,))
+    produse = c.fetchall()
+    conn.close()
+    return produse
+
+def este_urmarit(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT 1 FROM urmariri WHERE user_id=%s AND produs_id=%s', (user_id, produs_id))
+    result = c.fetchone()
+    conn.close()
+    return result is not None
+
+def salveaza_vizita(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS vizite (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        produs_id INTEGER,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('INSERT INTO vizite (user_id, produs_id) VALUES (%s, %s)', (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def get_istoric_vizite(user_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('''SELECT p.*, v.data as data_vizita FROM produse p
+                 JOIN vizite v ON p.id = v.produs_id
+                 WHERE v.user_id=%s
+                 ORDER BY v.data DESC LIMIT 20''', (user_id,))
+    vizite = c.fetchall()
+    conn.close()
+    return vizite
+
 def get_db_sqlite():
     import sqlite3
     conn = sqlite3.connect('price_site.db')
