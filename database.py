@@ -52,6 +52,18 @@ def init_db():
         data_creare TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        produs_id INTEGER,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, produs_id)
+    )''')
+
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        produs_id INTEGER,
+        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )''')
     conn.commit()
     conn.close()
     print("✅ Baza de date PostgreSQL initializata!")
