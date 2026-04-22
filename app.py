@@ -60,9 +60,16 @@ def index():
     produse = []
     if query:
         produse = cauta_produse_db(query)
-        t = threading.Thread(target=scrape_in_background, args=(query,))
-        t.daemon = True
-        t.start()
+        if not produse:
+            try:
+                rezultate = asyncio.run(cauta_emag(query))
+                produse = salveaza_rezultate(rezultate[:15])
+            except Exception as e:
+                print(f"Eroare cautare: {e}")
+        else:
+            t = threading.Thread(target=scrape_in_background, args=(query,))
+            t.daemon = True
+            t.start()
     return render_template('index.html', produse=produse, query=query)
 
 @app.route('/produs/<int:produs_id>')
