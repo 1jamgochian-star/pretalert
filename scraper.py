@@ -4,7 +4,10 @@ from bs4 import BeautifulSoup
 from database import salveaza_produs
 import re
 
-SCRAPER_API_KEY = "828c1cf21d9cd3260fa48783f96bd2c6"
+import os
+from dotenv import load_dotenv
+load_dotenv()
+SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
 
 def extrage_emag_id(link):
     match = re.search(r'/pd/([A-Z0-9]+)/', link)
