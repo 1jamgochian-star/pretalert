@@ -3,9 +3,7 @@ import psycopg2.extras
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-
 load_dotenv()
-
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db():
@@ -15,7 +13,6 @@ def get_db():
 def init_db():
     conn = get_db()
     c = conn.cursor()
-
     c.execute('''CREATE TABLE IF NOT EXISTS produse (
         id SERIAL PRIMARY KEY,
         emag_id TEXT UNIQUE,
@@ -25,7 +22,6 @@ def init_db():
         pret_curent REAL,
         data_adaugare TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
-
     c.execute('''CREATE TABLE IF NOT EXISTS istoric_preturi (
         id SERIAL PRIMARY KEY,
         produs_id INTEGER,
@@ -33,7 +29,6 @@ def init_db():
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (produs_id) REFERENCES produse(id)
     )''')
-
     c.execute('''CREATE TABLE IF NOT EXISTS alerte (
         id SERIAL PRIMARY KEY,
         produs_id INTEGER,
@@ -43,22 +38,24 @@ def init_db():
         data_creare TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (produs_id) REFERENCES produse(id)
     )''')
-
     c.execute('''CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
+        password TEXT,
+        avatar TEXT,
+        google_id TEXT,
+        facebook_id TEXT,
         data_creare TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
-
+    c.execute('''CREATE TABLE IF NOT EXISTS urmariri (
         id SERIAL PRIMARY KEY,
         user_id INTEGER,
         produs_id INTEGER,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, produs_id)
     )''')
-
+    c.execute('''CREATE TABLE IF NOT EXISTS vizite (
         id SERIAL PRIMARY KEY,
         user_id INTEGER,
         produs_id INTEGER,
@@ -74,17 +71,14 @@ def salveaza_produs(emag_id, nume, link, poza, pret):
     try:
         c.execute('''INSERT INTO produse (emag_id, nume, link, poza, pret_curent)
                      VALUES (%s, %s, %s, %s, %s)
-                     ON CONFLICT (emag_id) DO UPDATE 
+                     ON CONFLICT (emag_id) DO UPDATE
                      SET pret_curent=%s, poza=%s''',
                   (emag_id, nume, link, poza, pret, pret, poza))
-
         c.execute('SELECT id FROM produse WHERE emag_id=%s', (emag_id,))
         produs_id = c.fetchone()[0]
-
         c.execute('''INSERT INTO istoric_preturi (produs_id, pret, data)
                      VALUES (%s, %s, %s)''',
                   (produs_id, pret, datetime.now().isoformat()))
-
         conn.commit()
         return produs_id
     finally:
@@ -118,7 +112,7 @@ def salveaza_alerta(produs_id, email, pret_dorit):
 def get_alerte_user(email):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute('''SELECT a.*, p.nume, p.pret_curent, p.link 
+    c.execute('''SELECT a.*, p.nume, p.pret_curent, p.link
                  FROM alerte a JOIN produse p ON a.produs_id = p.id
                  WHERE a.email=%s AND a.activa=1''', (email,))
     alerte = c.fetchall()
@@ -149,13 +143,6 @@ def schimba_username(user_id, username):
 def urmareste_produs(user_id, produs_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS urmariri (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER,
-        produs_id INTEGER,
-        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(user_id, produs_id)
-    )''')
     c.execute('INSERT INTO urmariri (user_id, produs_id) VALUES (%s, %s) ON CONFLICT DO NOTHING',
               (user_id, produs_id))
     conn.commit()
@@ -190,12 +177,6 @@ def este_urmarit(user_id, produs_id):
 def salveaza_vizita(user_id, produs_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS vizite (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER,
-        produs_id INTEGER,
-        data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )''')
     c.execute('INSERT INTO vizite (user_id, produs_id) VALUES (%s, %s)', (user_id, produs_id))
     conn.commit()
     conn.close()
@@ -210,12 +191,6 @@ def get_istoric_vizite(user_id):
     vizite = c.fetchall()
     conn.close()
     return vizite
-
-def get_db_sqlite():
-    import sqlite3
-    conn = sqlite3.connect('price_site.db')
-    conn.row_factory = sqlite3.Row
-    return conn
 
 if __name__ == "__main__":
     init_db()
