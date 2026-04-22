@@ -56,6 +56,46 @@ def index():
         produse = salveaza_rezultate(asyncio.run(cauta_emag(query)))
     return render_template('index.html', produse=produse, query=query)
 
+from flask_login import login_required, current_user
+from database import get_alerte_user, sterge_alerta, schimba_parola, schimba_username
+
+@app.route('/profil')
+@login_required
+def profil():
+    alerte = get_alerte_user(current_user.email)
+    return render_template('profil.html', alerte=alerte)
+
+@app.route('/sterge-alerta/<int:alerta_id>')
+@login_required
+def sterge_alerta_route(alerta_id):
+    sterge_alerta(alerta_id, current_user.email)
+    flash('Alertă ștearsă!', 'success')
+    return redirect(url_for('profil'))
+
+@app.route('/profil/username', methods=['POST'])
+@login_required
+def schimba_username_route():
+    username = request.form.get('username')
+    schimba_username(current_user.id, username)
+    current_user.username = username
+    flash('Username actualizat!', 'success')
+    return redirect(url_for('profil'))
+
+@app.route('/profil/parola', methods=['POST'])
+@login_required
+def schimba_parola_route():
+    from flask_bcrypt import Bcrypt
+    bcrypt_inst = Bcrypt()
+    parola_noua = request.form.get('parola_noua')
+    confirmare = request.form.get('confirmare')
+    if parola_noua != confirmare:
+        flash('Parolele nu coincid!', 'error')
+        return redirect(url_for('profil'))
+    pw_hash = bcrypt.generate_password_hash(parola_noua).decode('utf-8')
+    schimba_parola(current_user.id, pw_hash)
+    flash('Parola schimbată cu succes!', 'success')
+    return redirect(url_for('profil'))
+
 @app.route('/produs/<int:produs_id>')
 def produs(produs_id):
     p = get_produs(produs_id)

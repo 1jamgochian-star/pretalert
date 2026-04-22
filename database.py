@@ -99,6 +99,38 @@ def salveaza_alerta(produs_id, email, pret_dorit):
                  VALUES (?, ?, ?)''', (produs_id, email, pret_dorit))
     conn.commit()
     conn.close()
+def get_alerte_user(email):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('''SELECT a.*, p.nume, p.link, p.poza, p.pret_curent
+                 FROM alerte a
+                 JOIN produse p ON a.produs_id = p.id
+                 WHERE a.email=? AND a.activa=1
+                 ORDER BY a.data_creare DESC''', (email,))
+    alerte = c.fetchall()
+    conn.close()
+    return alerte
+
+def sterge_alerta(alerta_id, email):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE alerte SET activa=0 WHERE id=? AND email=?', (alerta_id, email))
+    conn.commit()
+    conn.close()
+
+def schimba_parola(user_id, password_hash):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE users SET password_hash=? WHERE id=?', (password_hash, user_id))
+    conn.commit()
+    conn.close()
+
+def schimba_username(user_id, username):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('UPDATE users SET username=? WHERE id=?', (username, user_id))
+    conn.commit()
+    conn.close()
 
 if __name__ == "__main__":
     init_db()

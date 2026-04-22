@@ -14,7 +14,7 @@
     </a>
     <div style="margin-left:auto;display:flex;align-items:center;gap:0.8rem;">
         {% if current_user.is_authenticated %}
-            <span style="color:#aaa;font-size:0.9rem;">👤 {{ current_user.username }}</span>
+            <a href="/profil" style="color:#aaa;font-size:0.9rem;text-decoration:none;">👤 {{ current_user.username }}</a>
             <a href="/logout" style="padding:0.4rem 1rem;background:#ff4444;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Ieși</a>
         {% else %}
             <a href="/login" style="padding:0.4rem 1rem;background:#2d3148;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Login</a>
