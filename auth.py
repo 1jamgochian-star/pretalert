@@ -63,7 +63,8 @@ def login():
         u = c.fetchone()
         conn.close()
         if u and u['password'] and bcrypt.check_password_hash(u['password'], password):
-            login_user(User(u['id'], u['email'], u['username'], u.get('avatar')))
+            remember = request.form.get('remember') == 'on'
+login_user(User(u['id'], u['email'], u['username'], u.get('avatar')), remember=remember)
             return redirect(url_for('index'))
         flash('Email sau parolă greșită!', 'error')
     return render_template('login.html')
