@@ -25,6 +25,7 @@ MarkupSafe==3.0.3
 multidict==6.7.1
 packaging==26.1
 propcache==0.4.1
+psycopg2-binary==2.9.12
 pycparser==3.0
 python-dotenv==1.2.2
 requests==2.33.1
