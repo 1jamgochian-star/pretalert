@@ -45,6 +45,9 @@ oauth.register(
 
 app.register_blueprint(auth)
 
+# Initializeaza DB
+init_db()
+start_scheduler()
 @app.route('/')
 def index():
     query = request.args.get('q', '')
@@ -86,7 +89,4 @@ def api_search():
     produse = asyncio.run(cauta_emag(query))
     return jsonify(produse[:10])
 
-if __name__ == '__main__':
-    init_db()
-    start_scheduler()
     app.run(debug=True, port=5000)
