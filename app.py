@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import current_user, login_required
-from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite
-from scraper import cauta_emag, cauta_toate, scrape_produs, salveaza_rezultate
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db
+from scraper import cauta_emag, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
 import asyncio
+import threading
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -43,17 +44,25 @@ app.register_blueprint(auth)
 init_db()
 start_scheduler()
 
+def scrape_in_background(query):
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        rezultate = loop.run_until_complete(cauta_emag(query))
+        salveaza_rezultate(rezultate[:15])
+        loop.close()
+    except Exception as e:
+        print(f"Eroare background scrape: {e}")
+
 @app.route('/')
 def index():
     query = request.args.get('q', '')
     produse = []
     if query:
-        try:
-            rezultate = asyncio.run(cauta_emag(query))
-            produse = salveaza_rezultate(rezultate[:20])
-        except Exception as e:
-            print(f"Eroare cautare: {e}")
-            flash('Eroare la cautare, incearca din nou!', 'error')
+        produse = cauta_produse_db(query)
+        t = threading.Thread(target=scrape_in_background, args=(query,))
+        t.daemon = True
+        t.start()
     return render_template('index.html', produse=produse, query=query)
 
 @app.route('/produs/<int:produs_id>')
@@ -139,7 +148,7 @@ def api_search():
     query = request.args.get('q', '')
     if not query:
         return jsonify([])
-    produse = asyncio.run(cauta_emag(query))
+    produse = cauta_produse_db(query)
     return jsonify(produse[:10])
 
 if __name__ == '__main__':
