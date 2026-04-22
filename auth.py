@@ -38,7 +38,7 @@ def register():
         c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         c.execute('SELECT id FROM users WHERE email=%s', (email,))
         if c.fetchone():
-            flash('Email deja înregistrat!', 'error')
+            flash('Email deja inregistrat!', 'error')
             conn.close()
             return redirect(url_for('auth.register'))
         pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -47,7 +47,7 @@ def register():
         user_id = c.fetchone()['id']
         conn.commit()
         conn.close()
-        login_user(User(user_id, email, username))
+        login_user(User(user_id, email, username), remember=True)
         flash('Cont creat cu succes!', 'success')
         return redirect(url_for('index'))
     return render_template('register.html')
@@ -63,10 +63,9 @@ def login():
         u = c.fetchone()
         conn.close()
         if u and u['password'] and bcrypt.check_password_hash(u['password'], password):
-            remember = request.form.get('remember') == 'on'
-login_user(User(u['id'], u['email'], u['username'], u.get('avatar')), remember=remember)
+            login_user(User(u['id'], u['email'], u['username'], u.get('avatar')), remember=True)
             return redirect(url_for('index'))
-        flash('Email sau parolă greșită!', 'error')
+        flash('Email sau parola gresita!', 'error')
     return render_template('login.html')
 
 @auth.route('/logout')
@@ -129,5 +128,5 @@ def _oauth_login(oauth_id, email, username, avatar, provider):
         c.execute(f'UPDATE users SET {col}=%s, avatar=%s WHERE id=%s', (oauth_id, avatar, user_id))
         conn.commit()
     conn.close()
-    login_user(User(user_id, email, username, avatar))
+    login_user(User(user_id, email, username, avatar), remember=True)
     return redirect(url_for('index'))
