@@ -78,7 +78,7 @@ def salveaza_produs(emag_id, nume, link, poza, pret):
         produs_id = c.fetchone()[0]
         c.execute('''INSERT INTO istoric_preturi (produs_id, pret, data)
                      VALUES (%s, %s, %s)''',
-                  (produs_id, pret, datetime.now().isoformat()))
+                  (produs_id, pret, datetime.now()))
         conn.commit()
         return produs_id
     finally:
