@@ -66,3 +66,119 @@ def init_db():
     conn.commit()
     conn.close()
     print("✅ Baza de date initializata!")
+def get_produs(produs_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM produse WHERE id = %s", (produs_id,))
+    produs = c.fetchone()
+    conn.close()
+    return produs
+
+def get_istoric(produs_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM istoric_preturi WHERE produs_id = %s ORDER BY data DESC LIMIT 30", (produs_id,))
+    istoric = c.fetchall()
+    conn.close()
+    return istoric
+
+def salveaza_alerta(produs_id, email, pret_dorit):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO alerte (produs_id, email, pret_dorit) VALUES (%s, %s, %s)", (produs_id, email, pret_dorit))
+    conn.commit()
+    conn.close()
+
+def get_alerte_user(email):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM alerte WHERE email = %s AND activa = 1", (email,))
+    alerte = c.fetchall()
+    conn.close()
+    return alerte
+
+def sterge_alerta(alerta_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM alerte WHERE id = %s", (alerta_id,))
+    conn.commit()
+    conn.close()
+
+def schimba_parola(user_id, parola_noua):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET password = %s WHERE id = %s", (parola_noua, user_id))
+    conn.commit()
+    conn.close()
+
+def schimba_username(user_id, username_nou):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("UPDATE users SET username = %s WHERE id = %s", (username_nou, user_id))
+    conn.commit()
+    conn.close()
+
+def urmareste_produs(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO urmariri (user_id, produs_id) VALUES (%s, %s)", (user_id, produs_id))
+        conn.commit()
+    except:
+        conn.rollback()
+    conn.close()
+
+def sterge_urmarire(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM urmariri WHERE user_id = %s AND produs_id = %s", (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def get_produse_urmarite(user_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("""
+        SELECT p.* FROM produse p
+        JOIN urmariri u ON p.id = u.produs_id
+        WHERE u.user_id = %s
+    """, (user_id,))
+    produse = c.fetchall()
+    conn.close()
+    return produse
+
+def este_urmarit(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM urmariri WHERE user_id = %s AND produs_id = %s", (user_id, produs_id))
+    rezultat = c.fetchone()
+    conn.close()
+    return rezultat is not None
+
+def salveaza_vizita(user_id, produs_id):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("INSERT INTO vizite (user_id, produs_id) VALUES (%s, %s)", (user_id, produs_id))
+    conn.commit()
+    conn.close()
+
+def get_istoric_vizite(user_id):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("""
+        SELECT p.*, v.data as data_vizita FROM produse p
+        JOIN vizite v ON p.id = v.produs_id
+        WHERE v.user_id = %s
+        ORDER BY v.data DESC LIMIT 20
+    """, (user_id,))
+    vizite = c.fetchall()
+    conn.close()
+    return vizite
+
+def cauta_produse_db(query):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT * FROM produse WHERE LOWER(nume) LIKE %s LIMIT 20", (f'%{query.lower()}%',))
+    produse = c.fetchall()
+    conn.close()
+    return produse
