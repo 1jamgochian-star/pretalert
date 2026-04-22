@@ -1,35 +1,69 @@
 {% extends 'layout.html' %}
-{% block title %}Contul meu - PretAlert.ro{% endblock %}
+{% block title %}Contul meu{% endblock %}
 {% block content %}
 <div style="max-width:800px;margin:40px auto;padding:0 1rem;">
 
-    <!-- Header profil -->
-    <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;display:flex;align-items:center;gap:1.5rem;">
-        <div style="width:70px;height:70px;border-radius:50%;background:#6c63ff;display:flex;align-items:center;justify-content:center;font-size:2rem;">
-            {% if current_user.avatar %}
-                <img src="{{ current_user.avatar }}" style="width:70px;height:70px;border-radius:50%;">
-            {% else %}
-                👤
-            {% endif %}
-        </div>
-        <div>
-            <h2 style="color:#fff;margin:0;">{{ current_user.username }}</h2>
-            <p style="color:#888;margin:0.3rem 0 0;">{{ current_user.email }}</p>
-        </div>
+    <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;">
+        <h2 style="color:#fff;margin:0;">👤 {{ current_user.username }}</h2>
+        <p style="color:#888;margin:0.3rem 0 0;">{{ current_user.email }}</p>
     </div>
 
-    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% for category, message in messages %}
-            <div style="padding:0.7rem;margin-bottom:1rem;border-radius:8px;background:{% if category=='error' %}#ff4444{% else %}#00b894{% endif %};color:#fff;">{{ message }}</div>
+            <div style="padding:0.7rem;margin-bottom:1rem;border-radius:8px;color:#fff;background:{% if category=='error' %}#ff4444{% else %}#00b894{% endif %};">
+                {{ message }}
+            </div>
         {% endfor %}
     {% endwith %}
 
-    <!-- Alertele mele -->
     <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;">
-        <h3 style="color:#fff;margin-top:0;">🔔 Alertele mele active ({{ alerte|length }})</h3>
+        <h3 style="color:#fff;margin-top:0;">🔔 Alertele mele ({{ alerte|length }})</h3>
         {% if alerte %}
             {% for a in alerte %}
-            <div style="background:#0f1117;border-radius:8px;padding:1rem;margin-bottom:1rem;display:flex;align-items:center;gap:1rem;">
-                <img src="{{ a['poza'] }}" style="width:60px;height:60px;object-fit:contain;border-radius:8px;" onerror="this.style.display='none'">
-                <div style="
+            <div style="background:#0f1117;border-radius:8px;padding:1rem;margin-bottom:1rem;">
+                <a href="/produs/{{ a['produs_id'] }}" style="color:#fff;text-decoration:none;">
+                    {{ a['nume'][:60] }}
+                </a>
+                <div style="color:#888;font-size:0.85rem;margin-top:0.3rem;">
+                    Alertă la: <span style="color:#6c63ff;">{{ a['pret_dorit'] }} RON</span> |
+                    Preț curent: <span style="color:#00b894;">{{ a['pret_curent'] }} RON</span>
+                </div>
+                <a href="/sterge-alerta/{{ a['id'] }}"
+                   style="display:inline-block;margin-top:0.5rem;background:#ff4444;color:#fff;padding:0.3rem 0.7rem;border-radius:6px;text-decoration:none;font-size:0.8rem;">
+                    ✕ Șterge
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p style="color:#888;">Nu ai alerte active. <a href="/" style="color:#6c63ff;">Caută produse!</a></p>
+        {% endif %}
+    </div>
+
+    <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;">
+        <h3 style="color:#fff;margin-top:0;">✏️ Schimbă username</h3>
+        <form method="POST" action="/profil/username">
+            <input type="text" name="username" value="{{ current_user.username }}" required
+                style="padding:0.8rem;background:#0f1117;border:1px solid #2d3148;border-radius:8px;color:#fff;margin-right:0.5rem;">
+            <button type="submit"
+                style="padding:0.8rem 1.5rem;background:#6c63ff;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+                Salvează
+            </button>
+        </form>
+    </div>
+
+    <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #2d3148;">
+        <h3 style="color:#fff;margin-top:0;">🔒 Schimbă parola</h3>
+        <form method="POST" action="/profil/parola">
+            <input type="password" name="parola_noua" placeholder="Parolă nouă" required
+                style="width:100%;padding:0.8rem;margin-bottom:1rem;background:#0f1117;border:1px solid #2d3148;border-radius:8px;color:#fff;box-sizing:border-box;">
+            <input type="password" name="confirmare" placeholder="Confirmă parola" required
+                style="width:100%;padding:0.8rem;margin-bottom:1rem;background:#0f1117;border:1px solid #2d3148;border-radius:8px;color:#fff;box-sizing:border-box;">
+            <button type="submit"
+                style="padding:0.8rem 1.5rem;background:#6c63ff;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+                Schimbă parola
+            </button>
+        </form>
+    </div>
+
+</div>
+{% endblock %}

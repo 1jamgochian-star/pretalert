@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import current_user
 from database import init_db, get_produs, get_istoric, salveaza_alerta
 from scraper import cauta_emag, scrape_produs, salveaza_rezultate
@@ -129,4 +129,5 @@ def api_search():
     produse = asyncio.run(cauta_emag(query))
     return jsonify(produse[:10])
 
+if __name__ == '__main__':
     app.run(debug=True, port=5000)
