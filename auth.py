@@ -3,6 +3,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from flask_bcrypt import Bcrypt
 from database import get_db
 from authlib.integrations.flask_client import OAuth
+import psycopg2.extras
 
 auth = Blueprint('auth', __name__)
 bcrypt = Bcrypt()
@@ -19,15 +20,14 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_db()
-    c = conn.cursor()
-    c.execute('SELECT * FROM users WHERE id=?', (user_id,))
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute('SELECT * FROM users WHERE id=%s', (user_id,))
     u = c.fetchone()
     conn.close()
     if u:
-        return User(u['id'], u['email'], u['username'], u['avatar'])
+        return User(u['id'], u['email'], u['username'], u.get('avatar'))
     return None
 
-# --- REGISTER ---
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -35,48 +35,45 @@ def register():
         username = request.form.get('username')
         password = request.form.get('password')
         conn = get_db()
-        c = conn.cursor()
-        c.execute('SELECT id FROM users WHERE email=?', (email,))
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute('SELECT id FROM users WHERE email=%s', (email,))
         if c.fetchone():
             flash('Email deja înregistrat!', 'error')
             conn.close()
             return redirect(url_for('auth.register'))
         pw_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-        c.execute('INSERT INTO users (email, username, password_hash) VALUES (?,?,?)',
+        c.execute('INSERT INTO users (email, username, password) VALUES (%s,%s,%s) RETURNING id',
                   (email, username, pw_hash))
+        user_id = c.fetchone()['id']
         conn.commit()
-        user_id = c.lastrowid
         conn.close()
         login_user(User(user_id, email, username))
         flash('Cont creat cu succes!', 'success')
         return redirect(url_for('index'))
     return render_template('register.html')
 
-# --- LOGIN ---
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
         conn = get_db()
-        c = conn.cursor()
-        c.execute('SELECT * FROM users WHERE email=?', (email,))
+        c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        c.execute('SELECT * FROM users WHERE email=%s', (email,))
         u = c.fetchone()
         conn.close()
-        if u and u['password_hash'] and bcrypt.check_password_hash(u['password_hash'], password):
-            login_user(User(u['id'], u['email'], u['username'], u['avatar']))
+        if u and u['password'] and bcrypt.check_password_hash(u['password'], password):
+            login_user(User(u['id'], u['email'], u['username'], u.get('avatar')))
             return redirect(url_for('index'))
         flash('Email sau parolă greșită!', 'error')
     return render_template('login.html')
 
-# --- LOGOUT ---
 @auth.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
-# --- GOOGLE ---
 @auth.route('/login/google')
 def google_login():
     redirect_uri = url_for('auth.google_callback', _external=True)
@@ -94,7 +91,6 @@ def google_callback():
         provider='google'
     )
 
-# --- FACEBOOK ---
 @auth.route('/login/facebook')
 def facebook_login():
     redirect_uri = url_for('auth.facebook_callback', _external=True)
@@ -115,21 +111,21 @@ def facebook_callback():
 
 def _oauth_login(oauth_id, email, username, avatar, provider):
     conn = get_db()
-    c = conn.cursor()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     col = f'{provider}_id'
-    c.execute(f'SELECT * FROM users WHERE {col}=?', (oauth_id,))
+    c.execute(f'SELECT * FROM users WHERE {col}=%s', (oauth_id,))
     u = c.fetchone()
     if not u and email:
-        c.execute('SELECT * FROM users WHERE email=?', (email,))
+        c.execute('SELECT * FROM users WHERE email=%s', (email,))
         u = c.fetchone()
     if not u:
-        c.execute(f'INSERT INTO users (email, username, avatar, {col}) VALUES (?,?,?,?)',
+        c.execute(f'INSERT INTO users (email, username, avatar, {col}) VALUES (%s,%s,%s,%s) RETURNING id',
                   (email, username, avatar, oauth_id))
+        user_id = c.fetchone()['id']
         conn.commit()
-        user_id = c.lastrowid
     else:
         user_id = u['id']
-        c.execute(f'UPDATE users SET {col}=?, avatar=? WHERE id=?', (oauth_id, avatar, user_id))
+        c.execute(f'UPDATE users SET {col}=%s, avatar=%s WHERE id=%s', (oauth_id, avatar, user_id))
         conn.commit()
     conn.close()
     login_user(User(user_id, email, username, avatar))
