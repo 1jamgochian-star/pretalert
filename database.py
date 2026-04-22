@@ -182,3 +182,23 @@ def cauta_produse_db(query):
     produse = c.fetchall()
     conn.close()
     return produse
+def salveaza_produs(emag_id, nume, link, poza, pret):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    try:
+        c.execute("""
+            INSERT INTO produse (emag_id, nume, link, poza, pret_curent)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (emag_id) DO UPDATE
+            SET pret_curent = %s, nume = %s
+            RETURNING id
+        """, (emag_id, nume, link, poza, pret, pret, nume))
+        produs_id = c.fetchone()['id']
+        c.execute("INSERT INTO istoric_preturi (produs_id, pret) VALUES (%s, %s)", (produs_id, pret))
+        conn.commit()
+        conn.close()
+        return produs_id
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        raise e
