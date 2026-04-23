@@ -144,6 +144,7 @@ async def cauta_toate(query):
 
 def salveaza_rezultate(rezultate):
     produse_salvate = []
+    print(f"Salvez {len(rezultate)} rezultate...")
     for r in rezultate[:90]:
         if r.get('pret'):
             try:
@@ -154,4 +155,5 @@ def salveaza_rezultate(rezultate):
                 produse_salvate.append({**r, 'id': produs_id})
             except Exception as e:
                 print(f"Eroare salvare produs: {e}")
+    print(f"Salvate cu succes: {len(produse_salvate)}")
     return produse_salvate
