@@ -46,26 +46,12 @@ app.register_blueprint(auth)
 init_db()
 start_scheduler()
 
-def scrape_in_background(query):
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        rezultate = loop.run_until_complete(cauta_emag(query))
-        salveaza_rezultate(rezultate[:15])
-        loop.close()
-    except Exception as e:
-        print(f"Eroare background scrape: {e}")
-
 @app.route('/')
 def index():
     query = request.args.get('q', '')
     produse = []
     if query:
         produse = cauta_produse_db(query)
-        if not produse:
-            t = threading.Thread(target=scrape_in_background, args=(query,))
-            t.daemon = True
-            t.start()
     return render_template('index.html', produse=produse, query=query)
 
 @app.route('/produs/<int:produs_id>')
@@ -152,6 +138,16 @@ def api_search():
     if not query:
         return jsonify([])
     produse = cauta_produse_db(query)
+    if not produse:
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            rezultate = loop.run_until_complete(cauta_emag(query))
+            loop.close()
+            salveaza_rezultate(rezultate[:15])
+            produse = cauta_produse_db(query)
+        except Exception as e:
+            print(f"Eroare api search: {e}")
     return jsonify(produse[:10])
 
 if __name__ == '__main__':
