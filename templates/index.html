@@ -1,14 +1,12 @@
 {% extends "layout.html" %}
-{% block title %}Caută produse - PriceTracker{% endblock %}
-
+{% block title %}Caută produse - PretAlert.ro{% endblock %}
 {% block content %}
 <section class="hero">
     <h1>Monitorizează prețurile din România</h1>
     <p>Găsește cel mai bun preț și primește alerte când prețul scade</p>
-    
     <form action="/" method="GET" class="search-form">
-        <input type="text" name="q" value="{{ query }}" 
-               placeholder="Caută un produs... ex: Samsung Galaxy Watch" 
+        <input type="text" name="q" value="{{ query }}"
+               placeholder="Caută un produs... ex: Samsung Galaxy Watch"
                class="search-input" autofocus>
         <button type="submit" class="search-btn">🔍 Caută</button>
     </form>
@@ -16,36 +14,90 @@
 
 {% if query %}
 <section class="rezultate">
-    <h2>{{ produse|length }} rezultate pentru „{{ query }}"</h2>
-    
-    {% if produse %}
-    <div class="produse-grid">
-        {% for p in produse %}
-        <a href="/produs/{{ p.id }}" class="card-produs">
-            <div class="card-poza">
-                {% if p.poza %}
-                <img src="{{ p.poza }}" alt="{{ p.nume }}" loading="lazy">
-                {% else %}
-                <div class="no-img">📦</div>
-                {% endif %}
+    <h2 id="rezultate-titlu">
+        {% if produse %}
+            {{ produse|length }} rezultate pentru „{{ query }}"
+        {% else %}
+            🔍 Se caută „{{ query }}"...
+        {% endif %}
+    </h2>
+    <div class="produse-grid" id="produse-grid">
+        {% if produse %}
+            {% for p in produse %}
+            <a href="/produs/{{ p.id }}" class="card-produs">
+                <div class="card-poza">
+                    {% if p.poza %}
+                    <img src="{{ p.poza }}" alt="{{ p.nume }}" loading="lazy">
+                    {% else %}
+                    <div class="no-img">📦</div>
+                    {% endif %}
+                </div>
+                <div class="card-info">
+                    <h3>{{ p.nume[:60] }}{% if p.nume|length > 60 %}...{% endif %}</h3>
+                    <p class="pret">{{ p.pret_curent }} Lei</p>
+                    <span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:#ff6900;color:#fff;">
+                        eMAG
+                    </span>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div id="loading" style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">
+                <div style="font-size:2rem;margin-bottom:1rem;">⏳</div>
+                <p>Se caută produse pe eMAG... (poate dura 30-60 secunde)</p>
             </div>
-            <div class="card-info">
-                <h3>{{ p.nume[:60] }}{% if p.nume|length > 60 %}...{% endif %}</h3>
-                <p class="pret">{{ p.pret_text if p.pret_text else p.pret ~ ' Lei' }}</p>
-<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:{% if p.magazin == 'Altex' %}#e63946{% elif p.magazin == 'Cel.ro' %}#2196F3{% else %}#ff6900{% endif %};color:#fff;">
-    {{ p.magazin if p.magazin else 'eMAG' }}
-</span>
-            </div>
-        </a>
-        {% endfor %}
+        {% endif %}
     </div>
-    {% else %}
-    <p class="no-results">Niciun produs găsit. Încearcă altă căutare.</p>
-    {% endif %}
 </section>
+
+{% if not produse %}
+<script>
+(function() {
+    var query = "{{ query|e }}";
+    var attempts = 0;
+    var maxAttempts = 15;
+
+    function cauta() {
+        attempts++;
+        fetch('/api/search?q=' + encodeURIComponent(query))
+            .then(function(r) { return r.json(); })
+            .then(function(produse) {
+                if (produse.length > 0) {
+                    var grid = document.getElementById('produse-grid');
+                    var titlu = document.getElementById('rezultate-titlu');
+                    titlu.textContent = produse.length + ' rezultate pentru „' + query + '"';
+                    grid.innerHTML = produse.map(function(p) {
+                        return '<a href="/produs/' + p.id + '" class="card-produs">' +
+                            '<div class="card-poza">' +
+                            (p.poza ? '<img src="' + p.poza + '" alt="" loading="lazy">' : '<div class="no-img">📦</div>') +
+                            '</div>' +
+                            '<div class="card-info">' +
+                            '<h3>' + p.nume.substring(0, 60) + (p.nume.length > 60 ? '...' : '') + '</h3>' +
+                            '<p class="pret">' + (p.pret_curent ? p.pret_curent + ' Lei' : '') + '</p>' +
+                            '<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:#ff6900;color:#fff;">eMAG</span>' +
+                            '</div></a>';
+                    }).join('');
+                } else if (attempts < maxAttempts) {
+                    setTimeout(cauta, 5000);
+                } else {
+                    document.getElementById('produse-grid').innerHTML =
+                        '<p class="no-results" style="grid-column:1/-1">Niciun produs găsit. Încearcă altă căutare.</p>';
+                    document.getElementById('rezultate-titlu').textContent = 'Niciun rezultat pentru „' + query + '"';
+                }
+            })
+            .catch(function() {
+                if (attempts < maxAttempts) setTimeout(cauta, 5000);
+            });
+    }
+
+    setTimeout(cauta, 3000);
+})();
+</script>
+{% endif %}
+
 {% else %}
 <section class="features">
-    <a href="/?q=oferte" class="feature">
+    <a href="/?q=laptop" class="feature">
         <span>📊</span>
         <h3>Istoric prețuri</h3>
         <p>Urmărește evoluția prețului în timp</p>
@@ -55,7 +107,7 @@
         <h3>Alerte email</h3>
         <p>Primești notificare când prețul scade</p>
     </a>
-    <a href="/?q=reduceri" class="feature">
+    <a href="/?q=telefon" class="feature">
         <span>🛒</span>
         <h3>Comparare magazine</h3>
         <p>Găsești cel mai mic preț</p>
