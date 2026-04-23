@@ -9,8 +9,10 @@ async def actualizeaza_toate_preturile():
     conn = get_db()
     c = conn.cursor()
     c.execute('SELECT id, emag_id, link, pret_curent FROM produse')
-    produse = c.fetchall()
-    conn.close()
+rows = c.fetchall()
+conn.close()
+produse = [{'id': r[0], 'emag_id': r[1], 'link': r[2], 'pret_curent': r[3]} for r in rows]
+
     logging.info(f"Actualizez {len(produse)} produse...")
     for p in produse:
         try:
