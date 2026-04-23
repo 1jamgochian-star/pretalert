@@ -101,7 +101,12 @@ def salveaza_alerta(produs_id, email, pret_dorit):
 def get_alerte_user(email):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT * FROM alerte WHERE email = %s AND activa = 1", (email,))
+    c.execute("""
+        SELECT a.*, p.nume, p.pret_curent, p.poza
+        FROM alerte a
+        JOIN produse p ON a.produs_id = p.id
+        WHERE a.email = %s AND a.activa = 1
+    """, (email,))
     alerte = c.fetchall()
     conn.close()
     return rows_to_list(alerte)
