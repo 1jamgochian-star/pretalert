@@ -161,6 +161,8 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
     border-radius: 16px;
     text-align: center;
     transition: border-color 0.2s;
+    text-decoration: none;
+    color: inherit;
 }
 
 .feature:hover { border-color: #f0a500; }
