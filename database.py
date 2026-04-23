@@ -111,10 +111,13 @@ def get_alerte_user(email):
     conn.close()
     return rows_to_list(alerte)
 
-def sterge_alerta(alerta_id):
+def sterge_alerta(alerta_id, email=None):
     conn = get_db()
     c = conn.cursor()
-    c.execute("DELETE FROM alerte WHERE id = %s", (alerta_id,))
+    if email:
+        c.execute("DELETE FROM alerte WHERE id = %s AND email = %s", (alerta_id, email))
+    else:
+        c.execute("DELETE FROM alerte WHERE id = %s", (alerta_id,))
     conn.commit()
     conn.close()
 
