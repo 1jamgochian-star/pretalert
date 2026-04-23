@@ -26,10 +26,10 @@ async def cauta_emag_pagina(query, pagina=1):
         emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
     else:
         emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}/p{pagina}"
-    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={emag_url}"
+    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={emag_url}&render=false"
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as r:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
                 html = await r.text()
                 soup = BeautifulSoup(html, 'html.parser')
                 produse = soup.select('.card-item')
@@ -75,10 +75,10 @@ async def cauta_emag_multe_pagini(query):
 
 async def cauta_flanco(query):
     flanco_url = f"https://www.flanco.ro/catalogsearch/result/?q={query.replace(' ', '+')}"
-    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={flanco_url}"
+    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={flanco_url}&render=false"
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as r:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
                 html = await r.text()
                 soup = BeautifulSoup(html, 'html.parser')
                 produse = soup.select('.product-item-info')
@@ -109,10 +109,10 @@ async def cauta_flanco(query):
         return []
 
 async def scrape_produs(link):
-    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={link}"
+    url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={link}&render=false"
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=60)) as r:
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as r:
                 html = await r.text()
                 soup = BeautifulSoup(html, 'html.parser')
                 nume = soup.select_one('h1.page-header')
@@ -153,5 +153,4 @@ def salveaza_rezultate(rezultate):
                 produse_salvate.append({**r, 'id': produs_id})
             except Exception as e:
                 print(f"Eroare salvare produs: {e}")
-    return produse_salvatey
-
+    return produse_salvate
