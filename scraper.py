@@ -21,8 +21,11 @@ def curata_pret(pret_text):
     except:
         return None
 
-async def cauta_emag(query):
-    emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+async def cauta_emag_pagina(query, pagina=1):
+    if pagina == 1:
+        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+    else:
+        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}/p{pagina}"
     url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={emag_url}"
     try:
         async with aiohttp.ClientSession() as session:
@@ -53,10 +56,22 @@ async def cauta_emag(query):
                         "poza": poza_url,
                         "magazin": "eMAG"
                     })
-                return rezultate[:30]
+                return rezultate
     except Exception as e:
-        print(f"Eroare eMAG: {e}")
+        print(f"Eroare eMAG pagina {pagina}: {e}")
         return []
+
+async def cauta_emag(query, pagini=1):
+    toate_rezultatele = []
+    for pagina in range(1, pagini + 1):
+        rezultate = await cauta_emag_pagina(query, pagina)
+        toate_rezultatele.extend(rezultate)
+        if not rezultate:
+            break
+    return toate_rezultatele
+
+async def cauta_emag_multe_pagini(query):
+    return await cauta_emag(query, pagini=3)
 
 async def cauta_flanco(query):
     flanco_url = f"https://www.flanco.ro/catalogsearch/result/?q={query.replace(' ', '+')}"
@@ -128,7 +143,7 @@ async def cauta_toate(query):
 
 def salveaza_rezultate(rezultate):
     produse_salvate = []
-    for r in rezultate[:40]:
+    for r in rezultate[:90]:
         if r.get('pret'):
             try:
                 produs_id = salveaza_produs(
@@ -138,4 +153,5 @@ def salveaza_rezultate(rezultate):
                 produse_salvate.append({**r, 'id': produs_id})
             except Exception as e:
                 print(f"Eroare salvare produs: {e}")
-    return produse_salvate
+    return produse_salvatey
+

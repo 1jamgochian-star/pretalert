@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
-from scraper import scrape_produs, cauta_emag
+from scraper import scrape_produs, cauta_emag, cauta_emag_multe_pagini
 from database import salveaza_produs, get_db
 from mailer import trimite_alerta
 
@@ -58,7 +58,7 @@ async def preincarca_categorii():
     logging.info("🔄 Pre-încărcare categorii populare...")
     for categorie in CATEGORII_POPULARE:
         try:
-            rezultate = await cauta_emag(categorie)
+            from scraper import scrape_produs, cauta_emag, cauta_emag_multe_pagini
             for r in rezultate[:10]:
                 if r.get('pret'):
                     try:
