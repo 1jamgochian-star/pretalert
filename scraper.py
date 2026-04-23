@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
+print(f"SCRAPER_API_KEY loaded: {'OK' if SCRAPER_API_KEY else 'MISSING'}")
 
 def extrage_emag_id(link):
     match = re.search(r'/pd/([A-Z0-9]+)/', link)
