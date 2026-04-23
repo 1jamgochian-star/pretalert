@@ -66,8 +66,6 @@ def index():
             t = threading.Thread(target=scrape_in_background, args=(query,))
             t.daemon = True
             t.start()
-            t.join(timeout=45)
-            produse = cauta_produse_db(query)
     return render_template('index.html', produse=produse, query=query)
 
 @app.route('/produs/<int:produs_id>')
