@@ -1,11 +1,34 @@
 import asyncio
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
-from scraper import scrape_produs
+from scraper import scrape_produs, cauta_emag
 from database import salveaza_produs, get_db
 from mailer import trimite_alerta
 
 logging.basicConfig(level=logging.INFO)
+
+CATEGORII_POPULARE = [
+    "samsung galaxy",
+    "iphone",
+    "laptop",
+    "televizor",
+    "tableta",
+    "airpods",
+    "smartwatch",
+    "aspirator",
+    "frigider",
+    "masina de spalat",
+    "playstation",
+    "xbox",
+    "monitor",
+    "tastatura",
+    "mouse",
+    "router",
+    "camera foto",
+    "capsule cafea",
+    "robot aspirator",
+    "apple watch"
+]
 
 async def actualizeaza_toate_preturile():
     conn = get_db()
@@ -30,6 +53,24 @@ async def actualizeaza_toate_preturile():
                 verifica_alerte(p['id'], rezultat['pret'], rezultat['nume'], p['link'])
         except Exception as e:
             logging.error(f"❌ Eroare {p['emag_id']}: {e}")
+
+async def preincarca_categorii():
+    logging.info("🔄 Pre-încărcare categorii populare...")
+    for categorie in CATEGORII_POPULARE:
+        try:
+            rezultate = await cauta_emag(categorie)
+            for r in rezultate[:10]:
+                if r.get('pret'):
+                    try:
+                        salveaza_produs(
+                            r['emag_id'], r['nume'],
+                            r['link'], r.get('poza'), r['pret']
+                        )
+                    except Exception as e:
+                        logging.error(f"❌ Eroare salvare {r['emag_id']}: {e}")
+            logging.info(f"✅ Categorie '{categorie}': {len(rezultate)} produse")
+        except Exception as e:
+            logging.error(f"❌ Eroare categorie '{categorie}': {e}")
 
 def verifica_alerte(produs_id, pret_curent, nume_produs, link_produs):
     try:
@@ -57,6 +98,9 @@ def verifica_alerte(produs_id, pret_curent, nume_produs, link_produs):
 def job_actualizare():
     asyncio.run(actualizeaza_toate_preturile())
 
+def job_preincarca():
+    asyncio.run(preincarca_categorii())
+
 def start_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_job(
@@ -65,6 +109,20 @@ def start_scheduler():
         hours=12,
         id='actualizare_preturi'
     )
+    scheduler.add_job(
+        job_preincarca,
+        'cron',
+        hour=3,
+        minute=0,
+        id='preincarca_categorii'
+    )
     scheduler.start()
     logging.info("✅ Scheduler pornit - actualizare la fiecare 12 ore")
+
+    # Porneste pre-incarcare imediat la primul start
+    import threading
+    t = threading.Thread(target=job_preincarca)
+    t.daemon = True
+    t.start()
+
     return scheduler
