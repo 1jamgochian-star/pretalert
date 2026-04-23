@@ -7,6 +7,14 @@ load_dotenv()
 
 DATABASE_URL = "postgresql://postgres:jwsMqrNEFqNmBpeiddHvZGixGwCujlrB@shinkansen.proxy.rlwy.net:12071/railway"
 
+def row_to_dict(row):
+    if row is None:
+        return None
+    return dict(row)
+
+def rows_to_list(rows):
+    return [dict(r) for r in rows]
+
 def get_db():
     conn = psycopg2.connect(DATABASE_URL)
     conn.autocommit = False
@@ -66,13 +74,14 @@ def init_db():
     conn.commit()
     conn.close()
     print("✅ Baza de date initializata!")
+
 def get_produs(produs_id):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     c.execute("SELECT * FROM produse WHERE id = %s", (produs_id,))
     produs = c.fetchone()
     conn.close()
-    return produs
+    return row_to_dict(produs)
 
 def get_istoric(produs_id):
     conn = get_db()
@@ -80,7 +89,7 @@ def get_istoric(produs_id):
     c.execute("SELECT * FROM istoric_preturi WHERE produs_id = %s ORDER BY data DESC LIMIT 30", (produs_id,))
     istoric = c.fetchall()
     conn.close()
-    return istoric
+    return rows_to_list(istoric)
 
 def salveaza_alerta(produs_id, email, pret_dorit):
     conn = get_db()
@@ -95,7 +104,7 @@ def get_alerte_user(email):
     c.execute("SELECT * FROM alerte WHERE email = %s AND activa = 1", (email,))
     alerte = c.fetchall()
     conn.close()
-    return alerte
+    return rows_to_list(alerte)
 
 def sterge_alerta(alerta_id):
     conn = get_db()
@@ -145,7 +154,7 @@ def get_produse_urmarite(user_id):
     """, (user_id,))
     produse = c.fetchall()
     conn.close()
-    return produse
+    return rows_to_list(produse)
 
 def este_urmarit(user_id, produs_id):
     conn = get_db()
@@ -173,7 +182,7 @@ def get_istoric_vizite(user_id):
     """, (user_id,))
     vizite = c.fetchall()
     conn.close()
-    return vizite
+    return rows_to_list(vizite)
 
 def cauta_produse_db(query):
     conn = get_db()
@@ -181,7 +190,8 @@ def cauta_produse_db(query):
     c.execute("SELECT * FROM produse WHERE LOWER(nume) LIKE %s LIMIT 20", (f'%{query.lower()}%',))
     produse = c.fetchall()
     conn.close()
-    return produse
+    return rows_to_list(produse)
+
 def salveaza_produs(emag_id, nume, link, poza, pret):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
