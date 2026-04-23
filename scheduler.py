@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 from scraper import scrape_produs, cauta_emag, cauta_emag_multe_pagini
 from database import salveaza_produs, get_db
@@ -58,17 +59,19 @@ async def preincarca_categorii():
     logging.info("🔄 Pre-încărcare categorii populare...")
     for categorie in CATEGORII_POPULARE:
         try:
-            from scraper import scrape_produs, cauta_emag, cauta_emag_multe_pagini
-            for r in rezultate[:10]:
+            rezultate = await cauta_emag_multe_pagini(categorie)
+            salvate = 0
+            for r in rezultate[:90]:
                 if r.get('pret'):
                     try:
                         salveaza_produs(
                             r['emag_id'], r['nume'],
                             r['link'], r.get('poza'), r['pret']
                         )
+                        salvate += 1
                     except Exception as e:
-                        logging.error(f"❌ Eroare salvare {r['emag_id']}: {e}")
-            logging.info(f"✅ Categorie '{categorie}': {len(rezultate)} produse")
+                        pass
+            logging.info(f"✅ Categorie '{categorie}': {salvate} produse salvate")
         except Exception as e:
             logging.error(f"❌ Eroare categorie '{categorie}': {e}")
 
@@ -118,11 +121,7 @@ def start_scheduler():
     )
     scheduler.start()
     logging.info("✅ Scheduler pornit - actualizare la fiecare 12 ore")
-
-    # Porneste pre-incarcare imediat la primul start
-    import threading
     t = threading.Thread(target=job_preincarca)
     t.daemon = True
     t.start()
-
     return scheduler
