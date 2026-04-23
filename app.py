@@ -6,7 +6,6 @@ from scraper import cauta_emag, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
 import asyncio
-import threading
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -138,14 +137,17 @@ def api_search():
     if not query:
         return jsonify([])
     produse = cauta_produse_db(query)
+    print(f"API Search: '{query}' - {len(produse)} in DB")
     if not produse:
         try:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             rezultate = loop.run_until_complete(cauta_emag(query))
             loop.close()
+            print(f"Scraper gasit: {len(rezultate)} produse")
             salveaza_rezultate(rezultate[:15])
             produse = cauta_produse_db(query)
+            print(f"Dupa salvare: {len(produse)} in DB")
         except Exception as e:
             print(f"Eroare api search: {e}")
     return jsonify(produse[:10])
