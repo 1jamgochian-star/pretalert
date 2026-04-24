@@ -2,10 +2,11 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_login import current_user, login_required
 from whitenoise import WhiteNoise
 from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db
-from scraper import cauta_emag, scrape_produs, salveaza_rezultate
+from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
 import asyncio
+import threading
 import os
 from dotenv import load_dotenv
 load_dotenv()
@@ -43,6 +44,25 @@ oauth.register(
 
 app.register_blueprint(auth)
 init_db()
+
+scraping_jobs = {}
+
+def _run_background_scrape(query, pagini):
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        for pagina in pagini:
+            try:
+                rezultate = loop.run_until_complete(cauta_emag_pagina(query, pagina))
+                if rezultate:
+                    salveaza_rezultate(rezultate)
+                    print(f"Bg scrape p{pagina}: {len(rezultate)} produse")
+            except Exception as e:
+                print(f"Bg scrape p{pagina} eroare: {e}")
+        loop.close()
+    finally:
+        scraping_jobs[query.lower()]['done'] = True
+        print(f"Bg scrape terminat: '{query}'")
 start_scheduler()
 
 @app.route('/')
@@ -135,22 +155,33 @@ def alerta():
 def api_search():
     query = request.args.get('q', '')
     if not query:
-        return jsonify([])
+        return jsonify({"produse": [], "status": "done"})
+
+    query_key = query.lower()
     produse = cauta_produse_db(query)
-    print(f"API Search: '{query}' - {len(produse)} in DB")
-    if not produse:
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            rezultate = loop.run_until_complete(cauta_emag(query))
-            loop.close()
-            print(f"Scraper gasit: {len(rezultate)} produse")
-            salveaza_rezultate(rezultate)
-            produse = cauta_produse_db(query)
-            print(f"Dupa salvare: {len(produse)} in DB")
-        except Exception as e:
-            print(f"Eroare api search: {e}")
-    return jsonify(produse)
+    job = scraping_jobs.get(query_key)
+
+    if job is None:
+        if not produse:
+            # Scrape pagina 1 sincron ca să avem rezultate imediat
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                rezultate = loop.run_until_complete(cauta_emag(query))
+                loop.close()
+                print(f"Sync scrape p1: {len(rezultate)} produse")
+                salveaza_rezultate(rezultate)
+                produse = cauta_produse_db(query)
+            except Exception as e:
+                print(f"Eroare sync scrape: {e}")
+
+        # Paginile 2-3 în background
+        scraping_jobs[query_key] = {'done': False}
+        t = threading.Thread(target=_run_background_scrape, args=(query, [2, 3]), daemon=True)
+        t.start()
+
+    status = "done" if scraping_jobs.get(query_key, {}).get('done', True) else "scraping"
+    return jsonify({"produse": produse, "status": status})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
