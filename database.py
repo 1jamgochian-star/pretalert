@@ -202,12 +202,13 @@ def cauta_produse_db(query):
     c.execute(f"SELECT * FROM produse WHERE {conditii}", valori)
     produse = c.fetchall()
     if not produse:
-        # Fuzzy search: găsește produse chiar dacă utilizatorul scrie greșit
-        c.execute("""
-            SELECT * FROM produse
-            WHERE word_similarity(%s, LOWER(nume)) > 0.15
-            ORDER BY word_similarity(%s, LOWER(nume)) DESC
-        """, (query.lower(), query.lower()))
+        # Fuzzy per cuvânt: fiecare cuvânt trebuie să apară similar în nume (prinde typo-uri, nu produse diferite)
+        conditii_fuzzy = " AND ".join([f"word_similarity(%s, LOWER(nume)) > 0.3" for _ in cuvinte])
+        order_expr = " + ".join([f"word_similarity(%s, LOWER(nume))" for _ in cuvinte])
+        c.execute(
+            f"SELECT * FROM produse WHERE {conditii_fuzzy} ORDER BY {order_expr} DESC",
+            cuvinte + cuvinte
+        )
         produse = c.fetchall()
     conn.close()
     return rows_to_list(produse)
