@@ -71,6 +71,7 @@ def init_db():
         produs_id INTEGER,
         data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
+    c.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
     conn.commit()
     conn.close()
     print("✅ Baza de date initializata!")
@@ -200,6 +201,15 @@ def cauta_produse_db(query):
     valori = [f'%{cuvant}%' for cuvant in cuvinte]
     c.execute(f"SELECT * FROM produse WHERE {conditii} LIMIT 20", valori)
     produse = c.fetchall()
+    if not produse:
+        # Fuzzy search: găsește produse chiar dacă utilizatorul scrie greșit
+        c.execute("""
+            SELECT * FROM produse
+            WHERE word_similarity(%s, LOWER(nume)) > 0.15
+            ORDER BY word_similarity(%s, LOWER(nume)) DESC
+            LIMIT 20
+        """, (query.lower(), query.lower()))
+        produse = c.fetchall()
     conn.close()
     return rows_to_list(produse)
 
