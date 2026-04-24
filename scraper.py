@@ -24,7 +24,7 @@ def curata_pret(pret_text):
 
 async def cauta_emag_pagina(query, pagina=1):
     if pagina == 1:
-        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '%20')}?ref=effective_search"
     else:
         emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}/p{pagina}"
     url = f"http://api.scraperapi.com?api_key={SCRAPER_API_KEY}&url={emag_url}&render=false"
