@@ -115,6 +115,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 }
 .sort-btn:hover { border-color: #f0a500; color: #e2e8f0; }
 .sort-btn.active { background: #f0a500; border-color: #f0a500; color: #0f1117; font-weight: 600; }
+.sort-btn:disabled { opacity: 0.35; cursor: default; border-color: #2d3148; color: #64748b; }
 
 .produse-grid {
     display: grid;

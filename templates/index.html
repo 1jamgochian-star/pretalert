@@ -19,12 +19,21 @@
             {% if produse %}{{ produse|length }} rezultate pentru „{{ query }}"
             {% else %}🔍 Se caută „{{ query }}"...{% endif %}
         </h2>
-        <div class="sortare-bar" id="sortare-bar"{% if not produse %} style="display:none"{% endif %}>
-            <span class="sort-label">Sortează:</span>
-            <button class="sort-btn active" data-sort="relevanta">Relevanță</button>
-            <button class="sort-btn" data-sort="pret-asc">Preț ↑</button>
-            <button class="sort-btn" data-sort="pret-desc">Preț ↓</button>
-            <button class="sort-btn" data-sort="nume-az">Nume A-Z</button>
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div class="sortare-bar" id="sortare-bar"{% if not produse %} style="display:none"{% endif %}>
+                <span class="sort-label">Sortează:</span>
+                <button class="sort-btn active" data-sort="relevanta">Relevanță</button>
+                <button class="sort-btn" data-sort="pret-asc">Preț ↑</button>
+                <button class="sort-btn" data-sort="pret-desc">Preț ↓</button>
+                <button class="sort-btn" data-sort="nume-az">Nume A-Z</button>
+            </div>
+            <div class="sortare-bar" id="per-pagina-bar"{% if not produse %} style="display:none"{% endif %}>
+                <span class="sort-label">Pe pagină:</span>
+                <button class="sort-btn" data-pp="10">10</button>
+                <button class="sort-btn active" data-pp="20">20</button>
+                <button class="sort-btn" data-pp="50">50</button>
+                <button class="sort-btn" data-pp="100">100</button>
+            </div>
         </div>
     </div>
     <div class="produse-grid" id="produse-grid">
@@ -34,6 +43,11 @@
             <p>Se caută produse pe eMAG... (poate dura 30-60 secunde)</p>
         </div>
         {% endif %}
+    </div>
+    <div id="paginare" style="display:none;text-align:center;margin-top:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
+        <button class="sort-btn" id="btn-prev">← Anterior</button>
+        <span id="paginare-info" style="color:#94a3b8;font-size:0.9rem;white-space:nowrap;"></span>
+        <button class="sort-btn" id="btn-next">Următor →</button>
     </div>
 </section>
 
@@ -46,7 +60,14 @@
     var toateProdusele = {{ produse | tojson }};
     var vazuteIds = new Set(toateProdusele.map(function(p) { return p.id; }));
     var sortCurent = 'relevanta';
+    var perPagina = 20;
+    var paginaCurenta = 1;
     var intervalId = null;
+    var perPaginaBar = document.getElementById('per-pagina-bar');
+    var paginareDiv = document.getElementById('paginare');
+    var paginareInfo = document.getElementById('paginare-info');
+    var btnPrev = document.getElementById('btn-prev');
+    var btnNext = document.getElementById('btn-next');
 
     function cardHtml(p) {
         return '<a href="/produs/' + p.id + '" class="card-produs">' +
@@ -72,19 +93,45 @@
     }
 
     function reRender() {
-        grid.innerHTML = sorteaza(toateProdusele).map(cardHtml).join('');
+        var sorted = sorteaza(toateProdusele);
+        var totalPagini = Math.max(1, Math.ceil(sorted.length / perPagina));
+        if (paginaCurenta > totalPagini) paginaCurenta = totalPagini;
+        var start = (paginaCurenta - 1) * perPagina;
+        grid.innerHTML = sorted.slice(start, start + perPagina).map(cardHtml).join('');
+        if (totalPagini > 1) {
+            paginareDiv.style.display = 'flex';
+            paginareInfo.textContent = 'Pagina ' + paginaCurenta + ' din ' + totalPagini;
+            btnPrev.disabled = paginaCurenta === 1;
+            btnNext.disabled = paginaCurenta === totalPagini;
+        } else {
+            paginareDiv.style.display = 'none';
+        }
     }
 
     if (toateProdusele.length > 0) reRender();
 
-    document.querySelectorAll('.sort-btn').forEach(function(btn) {
+    document.querySelectorAll('#sortare-bar .sort-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('#sortare-bar .sort-btn').forEach(function(b) { b.classList.remove('active'); });
             btn.classList.add('active');
             sortCurent = btn.dataset.sort;
+            paginaCurenta = 1;
             reRender();
         });
     });
+
+    document.querySelectorAll('#per-pagina-bar .sort-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#per-pagina-bar .sort-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            perPagina = parseInt(btn.dataset.pp);
+            paginaCurenta = 1;
+            reRender();
+        });
+    });
+
+    btnPrev.addEventListener('click', function() { if (paginaCurenta > 1) { paginaCurenta--; reRender(); window.scrollTo(0, 0); } });
+    btnNext.addEventListener('click', function() { paginaCurenta++; reRender(); window.scrollTo(0, 0); });
 
     function poll() {
         fetch('/api/search?q=' + encodeURIComponent(query))
@@ -108,7 +155,9 @@
                 if (hadNew) reRender();
 
                 var total = toateProdusele.length;
-                sortareBar.style.display = total > 0 ? '' : 'none';
+                var visible = total > 0 ? '' : 'none';
+                sortareBar.style.display = visible;
+                perPaginaBar.style.display = visible;
 
                 if (status === 'scraping') {
                     titlu.innerHTML = total + ' produse găsite &middot; <span style="color:#f59e0b;">⏳ Se caută mai multe...</span>';
