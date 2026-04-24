@@ -1,6 +1,7 @@
 import psycopg2
 import psycopg2.extras
 import os
+import math
 from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
@@ -196,10 +197,16 @@ def cauta_produse_db(query):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cuvinte = query.lower().split()
-    conditii = " AND ".join([f"LOWER(nume) LIKE %s" for _ in cuvinte])
+    minim = max(1, math.ceil(len(cuvinte) / 2))
+    score_expr = " + ".join([f"CASE WHEN LOWER(nume) LIKE %s THEN 1 ELSE 0 END" for _ in cuvinte])
     valori = [f'%{cuvant}%' for cuvant in cuvinte]
-    c.execute(f"SELECT * FROM produse WHERE {conditii}", valori)
+    c.execute(f"""
+        SELECT * FROM (SELECT *, ({score_expr}) AS scor FROM produse) sub
+        WHERE scor >= %s
+        ORDER BY scor DESC
+    """, valori + [minim])
     produse = c.fetchall()
+    print(f"cauta_produse_db('{query}'): {len(produse)} produse (minim {minim}/{len(cuvinte)} cuvinte)")
     conn.close()
     return rows_to_list(produse)
 
