@@ -199,7 +199,7 @@ def cauta_produse_db(query):
     cuvinte = query.lower().split()
     conditii = " AND ".join([f"LOWER(nume) LIKE %s" for _ in cuvinte])
     valori = [f'%{cuvant}%' for cuvant in cuvinte]
-    c.execute(f"SELECT * FROM produse WHERE {conditii} LIMIT 20", valori)
+    c.execute(f"SELECT * FROM produse WHERE {conditii}", valori)
     produse = c.fetchall()
     if not produse:
         # Fuzzy search: găsește produse chiar dacă utilizatorul scrie greșit
@@ -207,7 +207,6 @@ def cauta_produse_db(query):
             SELECT * FROM produse
             WHERE word_similarity(%s, LOWER(nume)) > 0.15
             ORDER BY word_similarity(%s, LOWER(nume)) DESC
-            LIMIT 20
         """, (query.lower(), query.lower()))
         produse = c.fetchall()
     conn.close()

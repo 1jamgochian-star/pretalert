@@ -145,7 +145,7 @@ async def cauta_toate(query):
 def salveaza_rezultate(rezultate):
     produse_salvate = []
     print(f"Salvez {len(rezultate)} rezultate...")
-    for r in rezultate[:90]:
+    for r in rezultate:
         if r.get('pret'):
             try:
                 produs_id = salveaza_produs(

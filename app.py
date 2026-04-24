@@ -145,12 +145,12 @@ def api_search():
             rezultate = loop.run_until_complete(cauta_emag(query))
             loop.close()
             print(f"Scraper gasit: {len(rezultate)} produse")
-            salveaza_rezultate(rezultate[:30])
+            salveaza_rezultate(rezultate)
             produse = cauta_produse_db(query)
             print(f"Dupa salvare: {len(produse)} in DB")
         except Exception as e:
             print(f"Eroare api search: {e}")
-    return jsonify(produse[:20])
+    return jsonify(produse)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
