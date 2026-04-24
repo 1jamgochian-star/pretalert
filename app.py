@@ -151,6 +151,10 @@ def alerta():
     except Exception as e:
         return jsonify({"status": "error", "mesaj": str(e)}), 500
 
+@app.route('/23e71b655a3c0a565d2868686180808d')
+def profitshare_validation():
+    return app.send_static_file('23e71b655a3c0a565d2868686180808d')
+
 @app.route('/api/search')
 def api_search():
     query = request.args.get('q', '')
