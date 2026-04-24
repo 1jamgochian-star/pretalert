@@ -153,7 +153,7 @@ def alerta():
 
 @app.route('/23e71b655a3c0a565d2868686180808d')
 def profitshare_validation():
-    return app.send_static_file('23e71b655a3c0a565d2868686180808d')
+    return '', 200
 
 @app.route('/api/search')
 def api_search():
