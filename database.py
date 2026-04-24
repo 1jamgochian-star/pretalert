@@ -200,10 +200,6 @@ def cauta_produse_db(query):
     valori = [f'%{cuvant}%' for cuvant in cuvinte]
     c.execute(f"SELECT * FROM produse WHERE {conditii} LIMIT 20", valori)
     produse = c.fetchall()
-    if not produse:
-        conditii_or = " OR ".join([f"LOWER(nume) LIKE %s" for _ in cuvinte])
-        c.execute(f"SELECT * FROM produse WHERE {conditii_or} LIMIT 20", valori)
-        produse = c.fetchall()
     conn.close()
     return rows_to_list(produse)
 
