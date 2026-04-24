@@ -92,7 +92,29 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
 .search-btn:hover { background: #d4920a; }
 
-.rezultate h2 { margin-bottom: 1.5rem; color: #94a3b8; font-weight: 500; }
+.rezultate-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.rezultate-header h2 { margin: 0; color: #94a3b8; font-weight: 500; }
+.sortare-bar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.sort-label { color: #64748b; font-size: 0.875rem; white-space: nowrap; }
+.sort-btn {
+    padding: 0.35rem 0.75rem;
+    background: #1a1d2e;
+    border: 1px solid #2d3148;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.sort-btn:hover { border-color: #f0a500; color: #e2e8f0; }
+.sort-btn.active { background: #f0a500; border-color: #f0a500; color: #0f1117; font-weight: 600; }
 
 .produse-grid {
     display: grid;

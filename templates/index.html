@@ -14,38 +14,25 @@
 
 {% if query %}
 <section class="rezultate">
-    <h2 id="rezultate-titlu">
-        {% if produse %}
-            {{ produse|length }} rezultate pentru „{{ query }}"
-        {% else %}
-            🔍 Se caută „{{ query }}"...
-        {% endif %}
-    </h2>
+    <div class="rezultate-header">
+        <h2 id="rezultate-titlu">
+            {% if produse %}{{ produse|length }} rezultate pentru „{{ query }}"
+            {% else %}🔍 Se caută „{{ query }}"...{% endif %}
+        </h2>
+        <div class="sortare-bar" id="sortare-bar"{% if not produse %} style="display:none"{% endif %}>
+            <span class="sort-label">Sortează:</span>
+            <button class="sort-btn active" data-sort="relevanta">Relevanță</button>
+            <button class="sort-btn" data-sort="pret-asc">Preț ↑</button>
+            <button class="sort-btn" data-sort="pret-desc">Preț ↓</button>
+            <button class="sort-btn" data-sort="nume-az">Nume A-Z</button>
+        </div>
+    </div>
     <div class="produse-grid" id="produse-grid">
-        {% if produse %}
-            {% for p in produse %}
-            <a href="/produs/{{ p.id }}" class="card-produs">
-                <div class="card-poza">
-                    {% if p.poza %}
-                    <img src="{{ p.poza }}" alt="{{ p.nume }}" loading="lazy">
-                    {% else %}
-                    <div class="no-img">📦</div>
-                    {% endif %}
-                </div>
-                <div class="card-info">
-                    <h3>{{ p.nume[:60] }}{% if p.nume|length > 60 %}...{% endif %}</h3>
-                    <p class="pret">{{ p.pret_curent }} Lei</p>
-                    <span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:#ff6900;color:#fff;">
-                        eMAG
-                    </span>
-                </div>
-            </a>
-            {% endfor %}
-        {% else %}
-            <div id="loading" style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">
-                <div style="font-size:2rem;margin-bottom:1rem;">⏳</div>
-                <p>Se caută produse pe eMAG... (poate dura 30-60 secunde)</p>
-            </div>
+        {% if not produse %}
+        <div id="loading" style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">
+            <div style="font-size:2rem;margin-bottom:1rem;">⏳</div>
+            <p>Se caută produse pe eMAG... (poate dura 30-60 secunde)</p>
+        </div>
         {% endif %}
     </div>
 </section>
@@ -55,7 +42,10 @@
     var query = "{{ query|e }}";
     var grid = document.getElementById('produse-grid');
     var titlu = document.getElementById('rezultate-titlu');
-    var vazuteIds = new Set([{% for p in produse %}{{ p.id }}{% if not loop.last %},{% endif %}{% endfor %}]);
+    var sortareBar = document.getElementById('sortare-bar');
+    var toateProdusele = {{ produse | tojson }};
+    var vazuteIds = new Set(toateProdusele.map(function(p) { return p.id; }));
+    var sortCurent = 'relevanta';
     var intervalId = null;
 
     function cardHtml(p) {
@@ -69,6 +59,33 @@
             '</div></a>';
     }
 
+    function sorteaza(lista) {
+        var s = lista.slice();
+        if (sortCurent === 'pret-asc') {
+            s.sort(function(a, b) { return (a.pret_curent || Infinity) - (b.pret_curent || Infinity); });
+        } else if (sortCurent === 'pret-desc') {
+            s.sort(function(a, b) { return (b.pret_curent || 0) - (a.pret_curent || 0); });
+        } else if (sortCurent === 'nume-az') {
+            s.sort(function(a, b) { return a.nume.localeCompare(b.nume, 'ro'); });
+        }
+        return s;
+    }
+
+    function reRender() {
+        grid.innerHTML = sorteaza(toateProdusele).map(cardHtml).join('');
+    }
+
+    if (toateProdusele.length > 0) reRender();
+
+    document.querySelectorAll('.sort-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            sortCurent = btn.dataset.sort;
+            reRender();
+        });
+    });
+
     function poll() {
         fetch('/api/search?q=' + encodeURIComponent(query))
             .then(function(r) { return r.json(); })
@@ -79,14 +96,19 @@
                 var loading = document.getElementById('loading');
                 if (loading) loading.remove();
 
+                var hadNew = false;
                 produse.forEach(function(p) {
                     if (!vazuteIds.has(p.id)) {
                         vazuteIds.add(p.id);
-                        grid.insertAdjacentHTML('beforeend', cardHtml(p));
+                        toateProdusele.push(p);
+                        hadNew = true;
                     }
                 });
 
-                var total = vazuteIds.size;
+                if (hadNew) reRender();
+
+                var total = toateProdusele.length;
+                sortareBar.style.display = total > 0 ? '' : 'none';
 
                 if (status === 'scraping') {
                     titlu.innerHTML = total + ' produse găsite &middot; <span style="color:#f59e0b;">⏳ Se caută mai multe...</span>';
