@@ -200,13 +200,21 @@ def cauta_produse_db(query):
     minim = max(1, math.ceil(len(cuvinte) / 2))
     score_expr = " + ".join([f"CASE WHEN LOWER(nume) LIKE %s THEN 1 ELSE 0 END" for _ in cuvinte])
     valori = [f'%{cuvant}%' for cuvant in cuvinte]
-    c.execute(f"""
-        SELECT * FROM (SELECT *, ({score_expr}) AS scor FROM produse) sub
-        WHERE scor >= %s
-        ORDER BY scor DESC
-    """, valori + [minim])
+    cuvant_obligatoriu = next((c for c in cuvinte if len(c) >= 4), None)
+    if cuvant_obligatoriu:
+        c.execute(f"""
+            SELECT * FROM (SELECT *, ({score_expr}) AS scor FROM produse) sub
+            WHERE scor >= %s AND LOWER(nume) LIKE %s
+            ORDER BY scor DESC
+        """, valori + [minim, f'%{cuvant_obligatoriu}%'])
+    else:
+        c.execute(f"""
+            SELECT * FROM (SELECT *, ({score_expr}) AS scor FROM produse) sub
+            WHERE scor >= %s
+            ORDER BY scor DESC
+        """, valori + [minim])
     produse = c.fetchall()
-    print(f"cauta_produse_db('{query}'): {len(produse)} produse (minim {minim}/{len(cuvinte)} cuvinte)")
+    print(f"cauta_produse_db('{query}'): {len(produse)} produse (minim {minim}/{len(cuvinte)}, obligatoriu: '{cuvant_obligatoriu}')")
     conn.close()
     return rows_to_list(produse)
 
