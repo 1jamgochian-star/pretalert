@@ -195,8 +195,14 @@ def get_istoric_vizite(user_id):
 def cauta_produse_db(query):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    c.execute("SELECT * FROM produse WHERE LOWER(nume) LIKE %s LIMIT 20", (f'%{query.lower()}%',))
+    cuvinte = query.lower().split()
+    conditii = " AND ".join([f"LOWER(nume) LIKE %s" for _ in cuvinte])
+    valori = [f'%{cuvant}%' for cuvant in cuvinte]
+    c.execute(f"SELECT * FROM produse WHERE {conditii} LIMIT 20", valori)
     produse = c.fetchall()
+    if not produse:
+        c.execute("SELECT * FROM produse WHERE LOWER(nume) LIKE %s LIMIT 20", (f'%{cuvinte[0]}%',))
+        produse = c.fetchall()
     conn.close()
     return rows_to_list(produse)
 
