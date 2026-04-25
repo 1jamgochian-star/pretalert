@@ -217,8 +217,11 @@ def api_extensie():
     if request.method == 'OPTIONS':
         return '', 204
 
+    print(f"[extensie] POST primit de la {request.headers.get('Origin', 'N/A')}")
+
     data = request.get_json(silent=True)
     if not data:
+        print("[extensie] EROARE: body gol sau non-JSON")
         return jsonify({"status": "error", "mesaj": "JSON asteptat"}), 400
 
     emag_id  = str(data.get('emag_id', '')).strip()
@@ -228,10 +231,14 @@ def api_extensie():
     sursa    = str(data.get('sursa',   'eMAG')).strip()
     pret_raw = data.get('pret')
 
+    print(f"[extensie] sursa={sursa} | id={emag_id} | pret={pret_raw} | nume={nume[:60]!r}")
+
     if not emag_id or not nume or not link or pret_raw is None:
+        print(f"[extensie] EROARE: câmpuri lipsă – emag_id={bool(emag_id)} nume={bool(nume)} link={bool(link)} pret={pret_raw is not None}")
         return jsonify({"status": "error", "mesaj": "Lipsesc: emag_id, nume, link, pret"}), 400
 
     if not _link_valid(link):
+        print(f"[extensie] EROARE: link invalid – {link[:80]}")
         return jsonify({"status": "error", "mesaj": "Link invalid – magazin nesupportat"}), 400
 
     try:
@@ -239,10 +246,12 @@ def api_extensie():
         if pret <= 0:
             raise ValueError()
     except (TypeError, ValueError):
+        print(f"[extensie] EROARE: pret invalid – {pret_raw!r}")
         return jsonify({"status": "error", "mesaj": "Pret invalid"}), 400
 
     try:
         produs_id = salveaza_produs(emag_id, nume, link, poza, pret, sursa)
+        print(f"[extensie] OK – produs_id={produs_id} | {sursa} | {pret} Lei | {emag_id}")
         return jsonify({
             "status":    "ok",
             "mesaj":     "Produs salvat!",
@@ -250,6 +259,7 @@ def api_extensie():
             "url":       f"https://www.pretalert.ro/produs/{produs_id}"
         })
     except Exception as e:
+        print(f"[extensie] EROARE DB: {e}")
         return jsonify({"status": "error", "mesaj": str(e)}), 500
 
 
