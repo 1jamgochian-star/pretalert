@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import current_user, login_required
+from flask_cors import CORS
 from whitenoise import WhiteNoise
 from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs
 from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
@@ -12,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
+CORS(app, resources={r"/api/extensie": {"origins": "*"}})
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'pricetracker2025secret2026')
 app.config['REMEMBER_COOKIE_DURATION'] = 2592000
@@ -186,16 +188,6 @@ def api_search():
 
     status = "done" if scraping_jobs.get(query_key, {}).get('done', True) else "scraping"
     return jsonify({"produse": produse, "status": status})
-
-@app.after_request
-def add_extensie_cors(response):
-    """Permite cereri CORS doar de la extensia Chrome și de la pretalert.ro."""
-    origin = request.headers.get('Origin', '')
-    if origin.startswith('chrome-extension://') or 'pretalert.ro' in origin:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
-    return response
 
 
 SURSE_VALIDE = {
