@@ -1,0 +1,155 @@
+{% extends "layout.html" %}
+{% block title %}Politică de Confidențialitate – PretAlert.ro{% endblock %}
+
+{% block content %}
+<div style="max-width:780px;margin:2.5rem auto;padding:0 1rem;">
+
+  <h1 style="font-size:1.8rem;font-weight:700;margin-bottom:0.4rem;">Politică de Confidențialitate</h1>
+  <p style="color:#888;font-size:0.9rem;margin-bottom:2rem;">Ultima actualizare: 25 aprilie 2026</p>
+
+  <div style="background:#1a1a2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem 2rem;margin-bottom:1.5rem;">
+    <p style="line-height:1.7;color:#ccc;">
+      PretAlert.ro („noi", „serviciul") este un tracker de prețuri pentru produse comercializate
+      pe magazinele online din România. Această pagină descrie ce date colectăm, cum le folosim
+      și drepturile tale conform <strong>GDPR</strong> (Regulamentul UE 2016/679).
+    </p>
+  </div>
+
+  <!-- 1 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">1. Date colectate</h2>
+    <h3 style="font-size:1rem;font-weight:600;margin-bottom:0.5rem;color:#e0e0e0;">1.1 Contul de utilizator</h3>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;">
+      <li><strong>Adresă de e-mail</strong> — pentru autentificare și trimiterea alertelor de preț.</li>
+      <li><strong>Nume de utilizator</strong> — ales de tine la înregistrare.</li>
+      <li><strong>Parolă</strong> — stocată exclusiv sub formă de hash bcrypt; nu o citim niciodată.</li>
+      <li><strong>ID Google / Facebook</strong> — opțional, la autentificare cu OAuth.</li>
+    </ul>
+
+    <h3 style="font-size:1rem;font-weight:600;margin:1rem 0 0.5rem;color:#e0e0e0;">1.2 Date despre produse</h3>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;">
+      <li>Numele, prețul, imaginea și URL-ul produselor urmărite.</li>
+      <li>Istoricul prețurilor (doar valoarea numerică + timestamp).</li>
+      <li>Magazinul sursă (eMAG, Altex, Flanco etc.).</li>
+    </ul>
+
+    <h3 style="font-size:1rem;font-weight:600;margin:1rem 0 0.5rem;color:#e0e0e0;">1.3 Extensia de browser</h3>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;">
+      <li>Extensia Chrome citește <strong>local</strong> (în browser) URL-ul paginii active, numele produsului,
+          prețul și imaginea, exclusiv pe paginile magazinelor suportate.</li>
+      <li>Datele sunt trimise prin HTTPS la <code style="background:#0d0d1a;padding:1px 5px;border-radius:4px;">https://www.pretalert.ro/api/extensie</code>.</li>
+      <li>Extensia <strong>nu urmărește</strong> navigarea generală, nu accesează alte tab-uri și nu stochează date în afara browser-ului.</li>
+    </ul>
+
+    <h3 style="font-size:1rem;font-weight:600;margin:1rem 0 0.5rem;color:#e0e0e0;">1.4 Date tehnice (loguri)</h3>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;">
+      <li>Adresa IP, user-agent, timestamp la fiecare cerere HTTP — reținute maxim 30 de zile în logurile serverului.</li>
+    </ul>
+  </section>
+
+  <!-- 2 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">2. Scopul prelucrării</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:0.9rem;color:#ccc;">
+      <thead>
+        <tr style="border-bottom:1px solid #2d3148;color:#888;">
+          <th style="text-align:left;padding:0.5rem 0.8rem;">Scop</th>
+          <th style="text-align:left;padding:0.5rem 0.8rem;">Temei legal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #1e1e35;">
+          <td style="padding:0.6rem 0.8rem;">Furnizarea serviciului de urmărire prețuri</td>
+          <td style="padding:0.6rem 0.8rem;">Executarea contractului (art. 6(1)(b) GDPR)</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e1e35;">
+          <td style="padding:0.6rem 0.8rem;">Trimiterea alertelor de preț prin e-mail</td>
+          <td style="padding:0.6rem 0.8rem;">Consimțământ explicit (art. 6(1)(a))</td>
+        </tr>
+        <tr style="border-bottom:1px solid #1e1e35;">
+          <td style="padding:0.6rem 0.8rem;">Securitate și prevenirea abuzurilor</td>
+          <td style="padding:0.6rem 0.8rem;">Interes legitim (art. 6(1)(f))</td>
+        </tr>
+        <tr>
+          <td style="padding:0.6rem 0.8rem;">Statistici anonimizate de utilizare</td>
+          <td style="padding:0.6rem 0.8rem;">Interes legitim (art. 6(1)(f))</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 3 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">3. Cookie-uri</h2>
+    <p style="color:#ccc;line-height:1.7;">
+      Folosim exclusiv cookie-uri funcționale necesare sesiunii de autentificare
+      (<code style="background:#0d0d1a;padding:1px 5px;border-radius:4px;">session</code>,
+      <code style="background:#0d0d1a;padding:1px 5px;border-radius:4px;">remember_token</code>).
+      Nu folosim cookie-uri de tracking, publicitate sau analiză terță.
+    </p>
+  </section>
+
+  <!-- 4 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">4. Partajarea datelor</h2>
+    <p style="color:#ccc;line-height:1.7;">
+      <strong>Nu vindem și nu transferăm</strong> datele tale personale către terți.
+      Singurele excepții sunt:
+    </p>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;margin-top:0.5rem;">
+      <li><strong>Furnizori de infrastructură</strong> (hosting, bază de date) — exclusiv pentru operarea serviciului, sub acorduri de prelucrare.</li>
+      <li><strong>Autorități competente</strong> — dacă legea română/UE ne obligă.</li>
+    </ul>
+  </section>
+
+  <!-- 5 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">5. Retenție date</h2>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;">
+      <li>Contul și datele asociate — cât timp contul este activ.</li>
+      <li>Istoricul prețurilor — nelimitat (date publice, non-personale).</li>
+      <li>Loguri server — maxim 30 de zile.</li>
+      <li>La ștergerea contului, datele personale sunt eliminate în termen de 30 de zile.</li>
+    </ul>
+  </section>
+
+  <!-- 6 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">6. Drepturile tale (GDPR)</h2>
+    <ul style="color:#ccc;line-height:1.9;padding-left:1.4rem;">
+      <li><strong>Acces</strong> — poți solicita o copie a datelor stocate despre tine.</li>
+      <li><strong>Rectificare</strong> — poți corecta datele incorecte din pagina de profil.</li>
+      <li><strong>Ștergere</strong> — „dreptul de a fi uitat"; trimiți cererea pe e-mail.</li>
+      <li><strong>Portabilitate</strong> — datele exportate în format JSON la cerere.</li>
+      <li><strong>Opoziție / restricționare</strong> — poți opri prelucrarea în anumite condiții.</li>
+      <li><strong>Retragere consimțământ</strong> — poți dezactiva alertele oricând din profil.</li>
+    </ul>
+  </section>
+
+  <!-- 7 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">7. Securitate</h2>
+    <p style="color:#ccc;line-height:1.7;">
+      Toate comunicațiile sunt criptate prin HTTPS (TLS 1.2+). Parolele sunt hashed cu bcrypt.
+      Accesul la baza de date este restricționat prin credențiale și firewall. Efectuăm periodic
+      revizii de securitate și actualizăm dependențele.
+    </p>
+  </section>
+
+  <!-- 8 -->
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">8. Contact</h2>
+    <p style="color:#ccc;line-height:1.7;">
+      Pentru orice solicitare legată de datele personale sau pentru exercitarea drepturilor GDPR,
+      ne poți contacta la:<br>
+      <strong style="color:#6c63ff;">contact@pretalert.ro</strong>
+    </p>
+    <p style="color:#ccc;line-height:1.7;margin-top:0.5rem;">
+      Ai dreptul să depui o plângere la
+      <a href="https://www.dataprotection.ro" target="_blank" style="color:#6c63ff;">ANSPDCP</a>
+      (Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal).
+    </p>
+  </section>
+
+</div>
+{% endblock %}

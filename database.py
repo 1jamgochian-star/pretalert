@@ -31,8 +31,11 @@ def init_db():
         link TEXT NOT NULL,
         poza TEXT,
         pret_curent REAL,
+        sursa TEXT DEFAULT 'emag.ro',
         data_adaugare TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
+    # Migrare sigură pentru tabele existente
+    c.execute("ALTER TABLE produse ADD COLUMN IF NOT EXISTS sursa TEXT DEFAULT 'emag.ro'")
     c.execute('''CREATE TABLE IF NOT EXISTS istoric_preturi (
         id SERIAL PRIMARY KEY,
         produs_id INTEGER,
@@ -218,17 +221,17 @@ def cauta_produse_db(query):
     conn.close()
     return rows_to_list(produse)
 
-def salveaza_produs(emag_id, nume, link, poza, pret):
+def salveaza_produs(emag_id, nume, link, poza, pret, sursa='emag.ro'):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         c.execute("""
-            INSERT INTO produse (emag_id, nume, link, poza, pret_curent)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO produse (emag_id, nume, link, poza, pret_curent, sursa)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (emag_id) DO UPDATE
-            SET pret_curent = %s, nume = %s
+            SET pret_curent = %s, nume = %s, sursa = %s
             RETURNING id
-        """, (emag_id, nume, link, poza, pret, pret, nume))
+        """, (emag_id, nume, link, poza, pret, sursa, pret, nume, sursa))
         produs_id = c.fetchone()['id']
         c.execute("INSERT INTO istoric_preturi (produs_id, pret) VALUES (%s, %s)", (produs_id, pret))
         conn.commit()

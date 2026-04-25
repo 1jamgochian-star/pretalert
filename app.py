@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import current_user, login_required
 from whitenoise import WhiteNoise
-from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs
 from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
@@ -186,6 +186,77 @@ def api_search():
 
     status = "done" if scraping_jobs.get(query_key, {}).get('done', True) else "scraping"
     return jsonify({"produse": produse, "status": status})
+
+@app.after_request
+def add_extensie_cors(response):
+    """Permite cereri CORS doar de la extensia Chrome și de la pretalert.ro."""
+    origin = request.headers.get('Origin', '')
+    if origin.startswith('chrome-extension://') or 'pretalert.ro' in origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+    return response
+
+
+SURSE_VALIDE = {
+    'emag.ro', 'altex.ro', 'flanco.ro', 'cel.ro', 'pcgarage.ro',
+    'evomag.ro', 'mediagalaxy.ro', 'dedeman.ro', 'ikea.com', 'zara.com',
+}
+
+def _link_valid(link):
+    try:
+        from urllib.parse import urlparse
+        host = (urlparse(link).hostname or '').replace('www.', '')
+        return any(host == d or host.endswith('.' + d) for d in SURSE_VALIDE)
+    except Exception:
+        return False
+
+
+@app.route('/api/extensie', methods=['POST', 'OPTIONS'])
+def api_extensie():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"status": "error", "mesaj": "JSON asteptat"}), 400
+
+    emag_id  = str(data.get('emag_id', '')).strip()
+    nume     = str(data.get('nume',    '')).strip()
+    link     = str(data.get('link',    '')).strip()
+    poza     = str(data.get('poza',    '')).strip()
+    sursa    = str(data.get('sursa',   'eMAG')).strip()
+    pret_raw = data.get('pret')
+
+    if not emag_id or not nume or not link or pret_raw is None:
+        return jsonify({"status": "error", "mesaj": "Lipsesc: emag_id, nume, link, pret"}), 400
+
+    if not _link_valid(link):
+        return jsonify({"status": "error", "mesaj": "Link invalid – magazin nesupportat"}), 400
+
+    try:
+        pret = float(pret_raw)
+        if pret <= 0:
+            raise ValueError()
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "mesaj": "Pret invalid"}), 400
+
+    try:
+        produs_id = salveaza_produs(emag_id, nume, link, poza, pret, sursa)
+        return jsonify({
+            "status":    "ok",
+            "mesaj":     "Produs salvat!",
+            "produs_id": produs_id,
+            "url":       f"https://www.pretalert.ro/produs/{produs_id}"
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "mesaj": str(e)}), 500
+
+
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
