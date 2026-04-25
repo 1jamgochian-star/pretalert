@@ -221,6 +221,14 @@ def cauta_produse_db(query):
     conn.close()
     return rows_to_list(produse)
 
+def get_user_by_email(email):
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("SELECT id FROM users WHERE email = %s", (email,))
+    user = c.fetchone()
+    conn.close()
+    return row_to_dict(user)
+
 def salveaza_produs(emag_id, nume, link, poza, pret, sursa='emag.ro'):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)

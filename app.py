@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_login import current_user, login_required
 from flask_cors import CORS
 from whitenoise import WhiteNoise
-from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email
 from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-CORS(app, resources={r"/api/extensie": {"origins": "*"}})
+CORS(app, resources={r"/api/extensie.*": {"origins": "*"}})
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'pricetracker2025secret2026')
 app.config['REMEMBER_COOKIE_DURATION'] = 2592000
@@ -252,6 +252,58 @@ def api_extensie():
         })
     except Exception as e:
         print(f"[extensie] EROARE DB: {e}")
+        return jsonify({"status": "error", "mesaj": str(e)}), 500
+
+
+@app.route('/api/extensie/favorit', methods=['POST', 'OPTIONS'])
+def api_extensie_favorit():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    data = request.get_json(silent=True) or {}
+    produs_id = data.get('produs_id')
+    email     = str(data.get('email', '')).strip().lower()
+
+    if not produs_id or not email:
+        return jsonify({"status": "error", "mesaj": "Lipsesc produs_id sau email"}), 400
+
+    user = get_user_by_email(email)
+    if not user:
+        return jsonify({"status": "error", "mesaj": "Nu există cont PretAlert cu acest email"}), 404
+
+    try:
+        urmareste_produs(user['id'], int(produs_id))
+        print(f"[extensie/favorit] user={user['id']} produs={produs_id}")
+        return jsonify({"status": "ok", "mesaj": "Adăugat la favorite!"})
+    except Exception as e:
+        return jsonify({"status": "error", "mesaj": str(e)}), 500
+
+
+@app.route('/api/extensie/alerta', methods=['POST', 'OPTIONS'])
+def api_extensie_alerta():
+    if request.method == 'OPTIONS':
+        return '', 204
+
+    data = request.get_json(silent=True) or {}
+    produs_id  = data.get('produs_id')
+    email      = str(data.get('email', '')).strip().lower()
+    pret_dorit = data.get('pret_dorit')
+
+    if not produs_id or not email or pret_dorit is None:
+        return jsonify({"status": "error", "mesaj": "Lipsesc produs_id, email sau pret_dorit"}), 400
+
+    try:
+        pret = float(pret_dorit)
+        if pret <= 0:
+            raise ValueError()
+    except (TypeError, ValueError):
+        return jsonify({"status": "error", "mesaj": "Preț dorit invalid"}), 400
+
+    try:
+        salveaza_alerta(int(produs_id), email, pret)
+        print(f"[extensie/alerta] email={email} produs={produs_id} pret_dorit={pret}")
+        return jsonify({"status": "ok", "mesaj": "Alertă setată!"})
+    except Exception as e:
         return jsonify({"status": "error", "mesaj": str(e)}), 500
 
 
