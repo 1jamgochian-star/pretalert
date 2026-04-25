@@ -13,7 +13,22 @@
         </div>
         
         <div class="produs-detalii">
-            <h1>{{ produs['nume'] }}</h1>
+            {% set sursa = produs.get('sursa') or 'eMAG' %}
+            {% set _sl = sursa.lower() %}
+            {% if 'emag'    in _sl %}{% set store_color = '#ff6900' %}
+            {% elif 'dedeman' in _sl %}{% set store_color = '#00843D' %}
+            {% elif 'altex'   in _sl %}{% set store_color = '#e63946' %}
+            {% elif 'flanco'  in _sl %}{% set store_color = '#0057b7' %}
+            {% elif 'cel'     in _sl %}{% set store_color = '#2196F3' %}
+            {% else %}{% set store_color = '#666' %}{% endif %}
+
+            <h1>{{ produs['nume'] }}
+                <span style="display:inline-block;font-size:0.7rem;font-weight:600;
+                             padding:2px 9px;border-radius:20px;vertical-align:middle;
+                             margin-left:6px;background:{{ store_color }};color:#fff;">
+                    {{ sursa }}
+                </span>
+            </h1>
             <p class="pret-curent">{{ produs['pret_curent'] }} Lei</p>
             <p class="pret-info">
                 Min: <strong>{{ pret_min }} Lei</strong> | 
@@ -21,8 +36,9 @@
             </p>
             
             <div class="butoane">
-                <a href="{{ produs['link'] }}" target="_blank" class="btn-emag">
-                    🛒 Cumpără pe eMAG
+                <a href="{{ produs['link'] }}" target="_blank" class="btn-emag"
+                   style="background:{{ store_color }};">
+                    🛒 Cumpără pe {{ sursa }}
                 </a>
                 <button onclick="toggleAlerta()" class="btn-alerta">
     🔔 Setează alertă

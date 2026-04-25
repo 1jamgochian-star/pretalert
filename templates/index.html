@@ -69,14 +69,27 @@
     var btnPrev = document.getElementById('btn-prev');
     var btnNext = document.getElementById('btn-next');
 
+    var STORE_COLORS = {
+        'emag': '#ff6900', 'dedeman': '#00843D', 'altex': '#e63946',
+        'flanco': '#0057b7', 'cel': '#2196F3'
+    };
+    function storeColor(sursa) {
+        var s = (sursa || '').toLowerCase();
+        for (var key in STORE_COLORS) {
+            if (s.indexOf(key) !== -1) return STORE_COLORS[key];
+        }
+        return '#666';
+    }
+
     function cardHtml(p) {
+        var sursa = p.sursa || 'eMAG';
         return '<a href="/produs/' + p.id + '" class="card-produs">' +
             '<div class="card-poza">' +
             (p.poza ? '<img src="' + p.poza + '" alt="" loading="lazy">' : '<div class="no-img">📦</div>') +
             '</div><div class="card-info">' +
             '<h3>' + p.nume.substring(0, 60) + (p.nume.length > 60 ? '...' : '') + '</h3>' +
             '<p class="pret">' + (p.pret_curent ? p.pret_curent + ' Lei' : '') + '</p>' +
-            '<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:#ff6900;color:#fff;">eMAG</span>' +
+            '<span style="font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;background:' + storeColor(sursa) + ';color:#fff;">' + sursa + '</span>' +
             '</div></a>';
     }
 
