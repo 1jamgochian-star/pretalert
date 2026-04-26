@@ -1,3 +1,17 @@
+// GDPR consent banner
+(function () {
+    if (!localStorage.getItem('gdpr_accepted')) {
+        var banner = document.getElementById('gdpr-banner');
+        if (banner) banner.style.display = 'flex';
+    }
+})();
+
+function acceptGDPR() {
+    localStorage.setItem('gdpr_accepted', '1');
+    var banner = document.getElementById('gdpr-banner');
+    if (banner) banner.style.display = 'none';
+}
+
 function toggleAlerta() {
     const form = document.getElementById('forma-alerta');
     form.style.display = form.style.display === 'none' ? 'block' : 'none';

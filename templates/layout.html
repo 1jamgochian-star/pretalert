@@ -32,6 +32,17 @@
            <a href="/privacy" style="color:#888;text-decoration:none;">Politică de Confidențialitate</a>
         </p>
     </footer>
+    <div id="gdpr-banner" class="gdpr-banner" style="display:none;">
+        <p class="gdpr-text">
+            Folosim cookie-uri pentru funcționalitate și îmbunătățirea serviciului.
+            Prin continuarea navigării ești de acord cu
+            <a href="/privacy" class="gdpr-link">Politica de Confidențialitate</a>.
+        </p>
+        <div class="gdpr-butoane">
+            <a href="/privacy" class="gdpr-btn gdpr-btn-secondary">Află mai mult</a>
+            <button onclick="acceptGDPR()" class="gdpr-btn gdpr-btn-primary">Accept</button>
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
