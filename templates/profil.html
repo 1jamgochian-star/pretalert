@@ -101,4 +101,19 @@
             <p style="color:#888;">Nu ai vizitat niciun produs.</p>
         {% endif %}
     </div>
+
+    <div style="background:#1a1d2e;border-radius:12px;padding:2rem;margin-bottom:2rem;border:1px solid #ff4444;">
+        <h3 style="color:#ff4444;margin-top:0;">⚠️ Zonă periculoasă</h3>
+        <p style="color:#888;font-size:0.9rem;margin-bottom:1.2rem;">
+            Ștergerea contului este <strong>ireversibilă</strong>. Vor fi eliminate: contul tău, toate alertele
+            și toate urmăririle de produse.
+        </p>
+        <form method="POST" action="/sterge-cont"
+              onsubmit="return confirm('Ești sigur? Această acțiune nu poate fi anulată.');">
+            <button type="submit"
+                style="padding:0.8rem 1.5rem;background:#ff4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
+                🗑️ Șterge contul permanent
+            </button>
+        </form>
+    </div>
 {% endblock %}

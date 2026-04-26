@@ -125,10 +125,12 @@ def sterge_alerta(alerta_id, email=None):
     conn.commit()
     conn.close()
 
-def schimba_parola(user_id, parola_noua):
+def schimba_parola(user_id, parola_hash):
+    if not parola_hash.startswith(('$2b$', '$2a$', '$2y$')):
+        raise ValueError("schimba_parola acceptă doar hash-uri bcrypt, nu parole plain-text")
     conn = get_db()
     c = conn.cursor()
-    c.execute("UPDATE users SET password = %s WHERE id = %s", (parola_noua, user_id))
+    c.execute("UPDATE users SET password = %s WHERE id = %s", (parola_hash, user_id))
     conn.commit()
     conn.close()
 
@@ -228,6 +230,16 @@ def get_user_by_email(email):
     user = c.fetchone()
     conn.close()
     return row_to_dict(user)
+
+def sterge_cont_complet(user_id, email):
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("DELETE FROM alerte WHERE email = %s", (email,))
+    c.execute("DELETE FROM urmariri WHERE user_id = %s", (user_id,))
+    c.execute("DELETE FROM vizite WHERE user_id = %s", (user_id,))
+    c.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    conn.commit()
+    conn.close()
 
 def salveaza_produs(emag_id, nume, link, poza, pret, sursa='emag.ro'):
     conn = get_db()

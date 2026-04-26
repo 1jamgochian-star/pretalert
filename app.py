@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 from flask_login import current_user, login_required
 from flask_cors import CORS
 from whitenoise import WhiteNoise
-from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email, sterge_cont_complet
 from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
@@ -301,11 +301,20 @@ def api_extensie_alerta():
 
     try:
         salveaza_alerta(int(produs_id), email, pret)
-        print(f"[extensie/alerta] email={email} produs={produs_id} pret_dorit={pret}")
+        print(f"[extensie/alerta] produs={produs_id} pret_dorit={pret}")
         return jsonify({"status": "ok", "mesaj": "Alertă setată!"})
     except Exception as e:
         return jsonify({"status": "error", "mesaj": str(e)}), 500
 
+
+@app.route('/sterge-cont', methods=['POST'])
+@login_required
+def sterge_cont():
+    from flask_login import logout_user
+    sterge_cont_complet(current_user.id, current_user.email)
+    logout_user()
+    flash('Contul și toate datele tale au fost șterse complet.', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/privacy')
 def privacy():

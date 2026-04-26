@@ -52,7 +52,7 @@ def trimite_alerta(email_dest, nume_produs, pret_curent, pret_dorit, link_produs
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, email_dest, msg.as_string())
 
-        print(f"✅ Email trimis către {email_dest}")
+        print("✅ Email alertă trimis")
         return True
     except Exception as e:
         print(f"❌ Eroare email: {e}")
@@ -159,8 +159,8 @@ def trimite_raport_saptamanal(email_dest, username, produse_raport):
             server.login(EMAIL_USER, EMAIL_PASS)
             server.sendmail(EMAIL_USER, email_dest, msg.as_string())
 
-        print(f"✅ Raport săptămânal trimis către {email_dest}")
+        print("✅ Raport săptămânal trimis")
         return True
     except Exception as e:
-        print(f"❌ Eroare raport {email_dest}: {e}")
+        print(f"❌ Eroare raport: {e}")
         return False
