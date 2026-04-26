@@ -300,6 +300,26 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
     font-weight: 700;
 }
 
+.gdpr-check-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    margin-bottom: 0.8rem;
+    cursor: pointer;
+}
+
+.gdpr-check-label input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+    accent-color: #f0a500;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
 .grafic-section {
     background: #1a1d2e;
     border: 1px solid #2d3148;

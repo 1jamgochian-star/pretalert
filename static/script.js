@@ -22,8 +22,14 @@ async function salveazaAlerta(produsId) {
     const pretDorit = document.getElementById('pret-dorit').value;
     const msg = document.getElementById('alerta-msg');
 
+    const gdprCheck = document.getElementById('gdpr-alerta');
     if (!email || !pretDorit) {
         msg.textContent = '⚠️ Completează email și prețul dorit!';
+        msg.style.color = 'red';
+        return;
+    }
+    if (!gdprCheck.checked) {
+        msg.textContent = '⚠️ Trebuie să accepți Politica de Confidențialitate pentru a seta alerta.';
         msg.style.color = 'red';
         return;
     }

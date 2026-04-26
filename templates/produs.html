@@ -61,9 +61,14 @@
             <div id="forma-alerta" class="forma-alerta" style="display:none">
                 <h3>Alertă de preț</h3>
                 <input type="email" id="email" placeholder="Email-ul tău">
-                <input type="number" id="pret-dorit" 
+                <input type="number" id="pret-dorit"
                        placeholder="Preț dorit (Lei)"
                        value="{{ pret_min }}">
+                <label class="gdpr-check-label">
+                    <input type="checkbox" id="gdpr-alerta">
+                    Sunt de acord să primesc alerte pe email conform
+                    <a href="/privacy" class="gdpr-link">Politicii de Confidențialitate</a>
+                </label>
                 <button onclick="salveazaAlerta({{ produs['id'] }})">
                     Salvează alerta
                 </button>
