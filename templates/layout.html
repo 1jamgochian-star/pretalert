@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name='profitshareid' content='23e71b655a3c0a565d2868686180808d' />
     <title>{% block title %}PretAlert.ro{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Monitorizare prețuri în timp real pe eMAG, Altex, Flanco, Dedeman și alte magazine din România. Setează alerte gratuite și economisești.{% endblock %}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
@@ -30,9 +31,13 @@
     <footer>
         <p>© 2026 PretAlert.ro — Monitorizare prețuri România</p>
         <p style="margin-top:0.4rem;">
-            <a href="/privacy" style="color:#888;text-decoration:none;">Politică de Confidențialitate</a>
+            <a href="/despre" style="color:#888;text-decoration:none;">Despre</a>
             &nbsp;·&nbsp;
-            <a href="/terms" style="color:#888;text-decoration:none;">Termeni și Condiții</a>
+            <a href="/contact" style="color:#888;text-decoration:none;">Contact</a>
+            &nbsp;·&nbsp;
+            <a href="/privacy" style="color:#888;text-decoration:none;">Confidențialitate</a>
+            &nbsp;·&nbsp;
+            <a href="/terms" style="color:#888;text-decoration:none;">Termeni</a>
             &nbsp;·&nbsp;
             <a href="https://anpc.ro" target="_blank" rel="noopener" style="color:#888;text-decoration:none;">ANPC</a>
         </p>

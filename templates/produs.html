@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
-{% block title %}{{ produs.nume }} - PriceTracker{% endblock %}
+{% block title %}{{ produs.nume[:60] }} – {{ produs.pret_curent }} Lei | PretAlert.ro{% endblock %}
+{% block meta_description %}{{ produs.nume[:100] }} la {{ produs.pret_curent }} Lei. Urmărește istoricul prețurilor și primești alertă pe email când prețul scade. Disponibil pe {{ produs.get('sursa', 'eMAG') }}.{% endblock %}
 
 {% block content %}
 <div class="produs-page">

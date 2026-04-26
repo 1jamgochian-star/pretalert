@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block title %}Contact – PretAlert.ro{% endblock %}
+{% block meta_description %}Contactează echipa PretAlert.ro pentru întrebări, sugestii sau probleme legate de monitorizarea prețurilor din România.{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;margin:2.5rem auto;padding:0 1rem;">
+
+  <h1 style="font-size:1.8rem;font-weight:700;margin-bottom:0.4rem;">Contact</h1>
+  <p style="color:#888;font-size:0.9rem;margin-bottom:2rem;">Răspundem în maximum 24 de ore.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div style="padding:0.9rem 1.2rem;margin-bottom:1.5rem;border-radius:10px;color:#fff;
+                  background:{% if category=='error' %}#991b1b{% else %}#065f46{% endif %};
+                  border:1px solid {% if category=='error' %}#ff4444{% else %}#00b894{% endif %};">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:2rem;">
+    <form method="POST" action="/contact">
+      <label style="display:block;color:#94a3b8;font-size:0.85rem;margin-bottom:0.3rem;">Nume *</label>
+      <input type="text" name="nume" required placeholder="Numele tău"
+             style="width:100%;padding:0.8rem 1rem;margin-bottom:1.2rem;background:#0f1117;
+                    border:1px solid #2d3148;border-radius:8px;color:#e2e8f0;font-size:0.95rem;box-sizing:border-box;">
+
+      <label style="display:block;color:#94a3b8;font-size:0.85rem;margin-bottom:0.3rem;">Email *</label>
+      <input type="email" name="email" required placeholder="email@exemplu.ro"
+             style="width:100%;padding:0.8rem 1rem;margin-bottom:1.2rem;background:#0f1117;
+                    border:1px solid #2d3148;border-radius:8px;color:#e2e8f0;font-size:0.95rem;box-sizing:border-box;">
+
+      <label style="display:block;color:#94a3b8;font-size:0.85rem;margin-bottom:0.3rem;">Mesaj *</label>
+      <textarea name="mesaj" required rows="5" placeholder="Scrie mesajul tău..."
+                style="width:100%;padding:0.8rem 1rem;margin-bottom:1.5rem;background:#0f1117;
+                       border:1px solid #2d3148;border-radius:8px;color:#e2e8f0;font-size:0.95rem;
+                       box-sizing:border-box;resize:vertical;font-family:inherit;"></textarea>
+
+      <button type="submit"
+              style="width:100%;padding:0.9rem;background:#f0a500;color:#0f1117;border:none;
+                     border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;">
+        ✉️ Trimite mesajul
+      </button>
+    </form>
+  </div>
+
+  <div style="margin-top:1.5rem;display:flex;gap:1rem;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;background:#1a1d2e;border:1px solid #2d3148;border-radius:10px;padding:1.2rem;text-align:center;">
+      <div style="font-size:1.5rem;margin-bottom:0.4rem;">📧</div>
+      <p style="color:#94a3b8;font-size:0.85rem;margin:0;">Email direct</p>
+      <a href="mailto:pretalert@gmail.com" style="color:#f0a500;text-decoration:none;font-size:0.9rem;">pretalert@gmail.com</a>
+    </div>
+    <div style="flex:1;min-width:200px;background:#1a1d2e;border:1px solid #2d3148;border-radius:10px;padding:1.2rem;text-align:center;">
+      <div style="font-size:1.5rem;margin-bottom:0.4rem;">⏱️</div>
+      <p style="color:#94a3b8;font-size:0.85rem;margin:0;">Timp de răspuns</p>
+      <p style="color:#e2e8f0;font-size:0.9rem;margin:0;">Maximum 24 ore</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

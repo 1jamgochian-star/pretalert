@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block title %}Despre PretAlert.ro – Monitorizare prețuri România{% endblock %}
+{% block meta_description %}Află cum funcționează PretAlert.ro: urmărim prețuri pe eMAG, Altex, Flanco, Dedeman și îți trimitem alerte gratuite pe email când prețul scade.{% endblock %}
+
+{% block content %}
+<div style="max-width:780px;margin:2.5rem auto;padding:0 1rem;">
+
+  <h1 style="font-size:1.8rem;font-weight:700;margin-bottom:0.4rem;">Despre PretAlert.ro</h1>
+  <p style="color:#888;font-size:0.9rem;margin-bottom:2rem;">Urmărim prețurile ca să nu trebuiești tu.</p>
+
+  <div style="background:#1a1d2e;border:1px solid #f0a500;border-radius:12px;padding:1.5rem 2rem;margin-bottom:2rem;">
+    <p style="line-height:1.8;color:#ccc;font-size:1.05rem;">
+      <strong style="color:#fff;">PretAlert.ro</strong> este un serviciu gratuit de monitorizare a prețurilor
+      pentru produse din magazinele online din România. Urmărești un produs, setezi prețul la care vrei să
+      cumperi, și noi îți trimitem un email în momentul în care prețul scade.
+    </p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.2rem;margin-bottom:2.5rem;">
+    <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:0.8rem;">📊</div>
+      <h3 style="color:#fff;margin:0 0 0.5rem;">Istoric prețuri</h3>
+      <p style="color:#64748b;font-size:0.9rem;margin:0;">Grafic cu evoluția prețului în timp pentru fiecare produs urmărit.</p>
+    </div>
+    <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:0.8rem;">🔔</div>
+      <h3 style="color:#fff;margin:0 0 0.5rem;">Alerte pe email</h3>
+      <p style="color:#64748b;font-size:0.9rem;margin:0;">Primești notificare imediată când prețul unui produs scade sub pragul ales.</p>
+    </div>
+    <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:0.8rem;">🛒</div>
+      <h3 style="color:#fff;margin:0 0 0.5rem;">Mai multe magazine</h3>
+      <p style="color:#64748b;font-size:0.9rem;margin:0;">eMAG, Altex, Flanco, Dedeman, CEL.ro, PC Garage și altele.</p>
+    </div>
+    <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:0.8rem;">🧩</div>
+      <h3 style="color:#fff;margin:0 0 0.5rem;">Extensie Chrome</h3>
+      <p style="color:#64748b;font-size:0.9rem;margin:0;">Adaugă orice produs direct din browser cu un singur click.</p>
+    </div>
+    <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:0.8rem;">🆓</div>
+      <h3 style="color:#fff;margin:0 0 0.5rem;">100% gratuit</h3>
+      <p style="color:#64748b;font-size:0.9rem;margin:0;">Fără abonament, fără card. Ne susținem prin linkuri de afiliere.</p>
+    </div>
+    <div style="background:#1a1d2e;border:1px solid #2d3148;border-radius:12px;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.2rem;margin-bottom:0.8rem;">🔒</div>
+      <h3 style="color:#fff;margin:0 0 0.5rem;">Date în siguranță</h3>
+      <p style="color:#64748b;font-size:0.9rem;margin:0;">Parolele sunt hash-uite cu bcrypt. Nu vindem datele la terți niciodată.</p>
+    </div>
+  </div>
+
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">Cum funcționează?</h2>
+    <ol style="color:#ccc;line-height:2;padding-left:1.4rem;">
+      <li>Caută un produs în bara de căutare sau adaugă-l direct cu extensia Chrome.</li>
+      <li>Deschide pagina produsului și apasă <strong style="color:#f0a500;">„Setează alertă"</strong>.</li>
+      <li>Introdu email-ul și prețul la care vrei să cumperi.</li>
+      <li>Noi verificăm prețul zilnic. Când scade sub pragul tău, primești email imediat.</li>
+    </ol>
+  </section>
+
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">Magazine urmărite</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:0.6rem;">
+      {% for magazin, culoare in [('eMAG', '#ff6900'), ('Altex', '#e63946'), ('Flanco', '#0057b7'), ('Dedeman', '#00843D'), ('CEL.ro', '#2196F3'), ('PC Garage', '#7c3aed'), ('evoMAG', '#0891b2'), ('Media Galaxy', '#dc2626')] %}
+      <span style="padding:0.35rem 0.9rem;border-radius:20px;font-size:0.85rem;font-weight:600;background:{{ culoare }};color:#fff;">
+        {{ magazin }}
+      </span>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section style="margin-bottom:2rem;">
+    <h2 style="font-size:1.2rem;font-weight:600;color:#6c63ff;margin-bottom:0.8rem;">Transparență</h2>
+    <p style="color:#ccc;line-height:1.7;">
+      PretAlert.ro este susținut financiar prin <strong>linkuri de afiliere</strong>: dacă cumperi un
+      produs accesând un link de pe site, putem primi un comision mic de la magazin, fără niciun cost
+      suplimentar pentru tine. Prețurile și recomandările nu sunt influențate de aceste comisioane.
+    </p>
+  </section>
+
+  <div style="text-align:center;margin-top:3rem;">
+    <a href="/" style="display:inline-block;padding:0.9rem 2rem;background:#f0a500;color:#0f1117;border-radius:10px;text-decoration:none;font-weight:700;font-size:1rem;margin-right:1rem;">
+      🔍 Caută produse
+    </a>
+    <a href="/contact" style="display:inline-block;padding:0.9rem 2rem;background:#1a1d2e;color:#e2e8f0;border:1px solid #2d3148;border-radius:10px;text-decoration:none;font-weight:600;font-size:1rem;">
+      ✉️ Contactează-ne
+    </a>
+  </div>
+
+</div>
+{% endblock %}

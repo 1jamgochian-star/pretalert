@@ -58,6 +58,32 @@ def trimite_alerta(email_dest, nume_produs, pret_curent, pret_dorit, link_produs
         print(f"❌ Eroare email: {e}")
         return False
 
+def trimite_contact(nume, email_expeditor, mesaj):
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = f"[Contact PretAlert] Mesaj de la {nume}"
+        msg['From'] = EMAIL_USER
+        msg['To'] = EMAIL_USER
+        msg['Reply-To'] = email_expeditor
+        html = f"""
+        <html><body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0f1117;color:#e2e8f0;padding:24px;">
+          <h2 style="color:#f0a500;">Mesaj nou de contact — PretAlert.ro</h2>
+          <p><strong>Nume:</strong> {nume}</p>
+          <p><strong>Email:</strong> {email_expeditor}</p>
+          <p><strong>Mesaj:</strong></p>
+          <p style="background:#1a1d2e;padding:1rem;border-radius:8px;border:1px solid #2d3148;">{mesaj}</p>
+        </body></html>
+        """
+        msg.attach(MIMEText(html, 'html'))
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(EMAIL_USER, EMAIL_PASS)
+            server.sendmail(EMAIL_USER, EMAIL_USER, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"❌ Eroare contact: {e}")
+        return False
+
 def trimite_raport_saptamanal(email_dest, username, produse_raport):
     """produse_raport: list of dict cu chei: nume, pret_curent, pret_initial, link, produs_id"""
     try:

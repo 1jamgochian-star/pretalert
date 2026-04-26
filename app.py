@@ -1,20 +1,26 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, Response
 from flask_login import current_user, login_required
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from whitenoise import WhiteNoise
-from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email, sterge_cont_complet
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email, sterge_cont_complet, get_all_produse_ids
 from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
+from mailer import trimite_contact
 import asyncio
 import threading
 import os
+from datetime import date
 from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app, resources={r"/api/extensie.*": {"origins": "*"}})
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/', prefix='static')
+
+limiter = Limiter(get_remote_address, app=app, default_limits=[], storage_uri="memory://")
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'pricetracker2025secret2026')
 app.config['REMEMBER_COOKIE_DURATION'] = 2592000
 app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
@@ -205,6 +211,7 @@ def _link_valid(link):
 
 
 @app.route('/api/extensie', methods=['POST', 'OPTIONS'])
+@limiter.limit("100 per minute", exempt_when=lambda: request.method == "OPTIONS")
 def api_extensie():
     if request.method == 'OPTIONS':
         return '', 204
@@ -256,6 +263,7 @@ def api_extensie():
 
 
 @app.route('/api/extensie/favorit', methods=['POST', 'OPTIONS'])
+@limiter.limit("100 per minute", exempt_when=lambda: request.method == "OPTIONS")
 def api_extensie_favorit():
     if request.method == 'OPTIONS':
         return '', 204
@@ -280,6 +288,7 @@ def api_extensie_favorit():
 
 
 @app.route('/api/extensie/alerta', methods=['POST', 'OPTIONS'])
+@limiter.limit("100 per minute", exempt_when=lambda: request.method == "OPTIONS")
 def api_extensie_alerta():
     if request.method == 'OPTIONS':
         return '', 204
@@ -323,6 +332,76 @@ def privacy():
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
+
+@app.route('/despre')
+def despre():
+    return render_template('despre.html')
+
+@app.route('/contact', methods=['GET', 'POST'])
+def contact():
+    if request.method == 'POST':
+        nume  = request.form.get('nume', '').strip()
+        email = request.form.get('email', '').strip()
+        mesaj = request.form.get('mesaj', '').strip()
+        if not all([nume, email, mesaj]):
+            flash('Completează toate câmpurile.', 'error')
+            return redirect(url_for('contact'))
+        if trimite_contact(nume, email, mesaj):
+            flash('Mesajul a fost trimis! Îți răspundem în maximum 24 de ore.', 'success')
+        else:
+            flash('Eroare la trimitere. Scrie-ne direct la pretalert@gmail.com.', 'error')
+        return redirect(url_for('contact'))
+    return render_template('contact.html')
+
+@app.route('/robots.txt')
+def robots():
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /profil\n"
+        "Disallow: /sterge-cont\n"
+        "Disallow: /api/\n"
+        "Disallow: /login\n"
+        "Disallow: /register\n"
+        "Disallow: /logout\n"
+        "\n"
+        "Sitemap: https://www.pretalert.ro/sitemap.xml\n"
+    )
+    return Response(content, mimetype='text/plain')
+
+@app.route('/sitemap.xml')
+def sitemap():
+    base  = 'https://www.pretalert.ro'
+    today = date.today().isoformat()
+    static_pages = [
+        ('/',        '1.0', 'daily'),
+        ('/despre',  '0.8', 'monthly'),
+        ('/contact', '0.6', 'monthly'),
+        ('/privacy', '0.3', 'monthly'),
+        ('/terms',   '0.3', 'monthly'),
+    ]
+    urls = []
+    for path, priority, freq in static_pages:
+        urls.append(
+            f"  <url><loc>{base}{path}</loc>"
+            f"<lastmod>{today}</lastmod>"
+            f"<changefreq>{freq}</changefreq>"
+            f"<priority>{priority}</priority></url>"
+        )
+    for pid in get_all_produse_ids():
+        urls.append(
+            f"  <url><loc>{base}/produs/{pid}</loc>"
+            f"<lastmod>{today}</lastmod>"
+            f"<changefreq>daily</changefreq>"
+            f"<priority>0.6</priority></url>"
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + '\n'.join(urls) +
+        '\n</urlset>'
+    )
+    return Response(xml, mimetype='application/xml')
 
 
 if __name__ == '__main__':

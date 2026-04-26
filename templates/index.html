@@ -1,5 +1,6 @@
 {% extends "layout.html" %}
-{% block title %}Caută produse - PretAlert.ro{% endblock %}
+{% block title %}{% if query %}{{ query }} – Prețuri România | PretAlert.ro{% else %}PretAlert.ro – Monitorizare prețuri eMAG, Altex, Flanco{% endif %}{% endblock %}
+{% block meta_description %}{% if query %}Compară prețuri pentru „{{ query }}" de la eMAG, Altex, Flanco, Dedeman și alte magazine online din România.{% else %}Monitorizare prețuri în timp real pe eMAG, Altex, Flanco, Dedeman. Setează alerte gratuite și fii primul care știe când prețul scade.{% endif %}{% endblock %}
 {% block content %}
 <section class="hero">
     <h1>Monitorizează prețurile din România</h1>

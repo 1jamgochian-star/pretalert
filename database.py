@@ -231,6 +231,14 @@ def get_user_by_email(email):
     conn.close()
     return row_to_dict(user)
 
+def get_all_produse_ids():
+    conn = get_db()
+    c = conn.cursor()
+    c.execute("SELECT id FROM produse ORDER BY id")
+    ids = [r[0] for r in c.fetchall()]
+    conn.close()
+    return ids
+
 def sterge_cont_complet(user_id, email):
     conn = get_db()
     c = conn.cursor()
