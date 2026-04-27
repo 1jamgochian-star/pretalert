@@ -31,11 +31,13 @@ def init_db():
         link TEXT NOT NULL,
         poza TEXT,
         pret_curent REAL,
-        sursa TEXT DEFAULT 'emag.ro',
+        sursa TEXT DEFAULT 'eMAG',
         data_adaugare TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
     # Migrare sigură pentru tabele existente
-    c.execute("ALTER TABLE produse ADD COLUMN IF NOT EXISTS sursa TEXT DEFAULT 'emag.ro'")
+    c.execute("ALTER TABLE produse ADD COLUMN IF NOT EXISTS sursa TEXT DEFAULT 'eMAG'")
+    # Normalizare: vechile înregistrări cu sursa='emag.ro' → 'eMAG'
+    c.execute("UPDATE produse SET sursa = 'eMAG' WHERE sursa = 'emag.ro'")
     c.execute('''CREATE TABLE IF NOT EXISTS istoric_preturi (
         id SERIAL PRIMARY KEY,
         produs_id INTEGER,
@@ -249,7 +251,7 @@ def sterge_cont_complet(user_id, email):
     conn.commit()
     conn.close()
 
-def salveaza_produs(emag_id, nume, link, poza, pret, sursa='emag.ro'):
+def salveaza_produs(emag_id, nume, link, poza, pret, sursa='eMAG'):
     conn = get_db()
     c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
