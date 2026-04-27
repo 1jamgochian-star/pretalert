@@ -85,9 +85,7 @@ async def _cauta_emag(session, query, pagina=1):
 
 async def cauta_altex(query):
     """Caută pe Altex via API-ul oficial Fenrir (fără ScraperAPI)."""
-    api_url = (
-        f"https://fenrir.altex.ro/v2/catalog/search/{quote(query, safe='')}?size=48"
-    )
+    api_url = f"https://fenrir.altex.ro/v2/catalog/search/{quote(query, safe='')}?size=48"
     try:
         async with CurlSession() as session:
             r = await session.get(api_url, impersonate="chrome110", timeout=30)
@@ -96,48 +94,43 @@ async def cauta_altex(query):
         print(f"Altex API eroare: {e}")
         return []
 
-    hits = (
-        data.get('hits')
-        or data.get('products')
-        or (data.get('data') or {}).get('hits')
-        or []
-    )
+    # Răspunsul are cheia 'products' (nu 'hits')
+    hits = data.get('products') or data.get('hits') or []
 
     rezultate = []
     for p in hits:
         nume = (p.get('name') or '').strip()
-        url_key = p.get('url_key', '')
+        url_key = (p.get('url_key') or '').strip()
 
-        # preț — structură RON nested
-        pret = None
-        price_data = p.get('price', {})
-        if isinstance(price_data, dict):
-            ron = price_data.get('RON') or price_data.get('ron') or {}
-            if isinstance(ron, dict):
-                pret = ron.get('default') or ron.get('final') or ron.get('min')
-            elif isinstance(ron, (int, float)):
-                pret = float(ron)
-        elif isinstance(price_data, (int, float)):
-            pret = float(price_data)
+        # Preț — câmp direct float în API-ul Fenrir
+        pret = p.get('price')
+        if pret is None:
+            pret = p.get('regular_price')
+        if pret is not None:
+            try:
+                pret = float(pret)
+            except (TypeError, ValueError):
+                pret = None
 
-        # imagine — path relativ /media/catalog/product/a/b/xxx.jpg
+        # Imagine — câmpurile 'image'/'thumbnail'/'small_image' conțin path relativ
+        # URL complet: https://lcdn.altex.ro/media/catalog/product/{path_fara_prefix}
         raw_img = p.get('image') or p.get('thumbnail') or p.get('small_image') or ''
         if raw_img:
-            img_path = raw_img.lstrip('/')          # "media/catalog/product/a/b/xxx.jpg"
-            if img_path.startswith('media/catalog/product/'):
-                img_path = img_path[len('media/catalog/product/'):]
-            poza_url = f"https://lcdn.altex.ro/resize/media/catalog/product/{img_path}"
+            # raw_img = "/media/catalog/product/a/b/xxx.jpg"
+            img_path = raw_img.lstrip('/')   # "media/catalog/product/a/b/xxx.jpg"
+            poza_url = f"https://lcdn.altex.ro/{img_path}"
         else:
             poza_url = None
 
         if not nume or not url_key or not pret:
             continue
 
+        # Link produs: https://altex.ro/{url_key}
         link = f"https://altex.ro/{url_key}"
         rezultate.append({
             'emag_id': _slug_id('altex', link),
             'nume': nume,
-            'pret': float(pret),
+            'pret': pret,
             'link': link,
             'poza': poza_url,
             'sursa': 'Altex',
