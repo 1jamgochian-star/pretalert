@@ -5,7 +5,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from whitenoise import WhiteNoise
 from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email, sterge_cont_complet, get_all_produse_ids
-from scraper import cauta_emag, cauta_emag_pagina, scrape_produs, salveaza_rezultate
+from scraper import cauta_emag, cauta_toate, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
 from mailer import trimite_contact
