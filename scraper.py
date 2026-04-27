@@ -22,8 +22,11 @@ def curata_pret(pret_text):
     except:
         return None
 
-async def cauta_emag(query):
-    emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+async def cauta_emag(query, pagina=1):
+    if pagina == 1:
+        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+    else:
+        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}/p{pagina}/c"
     try:
         r = requests.get(emag_url, headers=HEADERS, timeout=30)
         soup = BeautifulSoup(r.text, 'html.parser')

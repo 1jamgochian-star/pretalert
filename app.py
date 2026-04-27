@@ -55,18 +55,17 @@ init_db()
 
 scraping_jobs = {}
 
-def _run_background_scrape(query, pagini):
+def _run_background_scrape(query):
     try:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        for pagina in pagini:
-            try:
-                rezultate = loop.run_until_complete(cauta_emag_pagina(query, pagina))
-                if rezultate:
-                    salveaza_rezultate(rezultate)
-                    print(f"Bg scrape p{pagina}: {len(rezultate)} produse")
-            except Exception as e:
-                print(f"Bg scrape p{pagina} eroare: {e}")
+        try:
+            rezultate = loop.run_until_complete(cauta_emag(query))
+            if rezultate:
+                salveaza_rezultate(rezultate)
+                print(f"Bg scrape p1: {len(rezultate)} produse")
+        except Exception as e:
+            print(f"Bg scrape eroare: {e}")
         loop.close()
     finally:
         scraping_jobs[query.lower()]['done'] = True
@@ -179,29 +178,16 @@ def api_search():
         return jsonify({"produse": [], "status": "done"})
 
     query_key = query.lower()
+    # Returnează imediat ce e în DB
     produse = cauta_produse_db(query)
-    job = scraping_jobs.get(query_key)
 
-    if job is None:
-        if not produse:
-            # Scrape pagina 1 sincron ca să avem rezultate imediat
-            try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                rezultate = loop.run_until_complete(cauta_emag(query))
-                loop.close()
-                print(f"Sync scrape p1: {len(rezultate)} produse")
-                salveaza_rezultate(rezultate)
-                produse = cauta_produse_db(query)
-            except Exception as e:
-                print(f"Eroare sync scrape: {e}")
-
-        # Paginile 2-3 în background
+    if query_key not in scraping_jobs:
+        # Pornește scraping pagina 1 în background
         scraping_jobs[query_key] = {'done': False}
-        t = threading.Thread(target=_run_background_scrape, args=(query, [2, 3]), daemon=True)
+        t = threading.Thread(target=_run_background_scrape, args=(query,), daemon=True)
         t.start()
 
-    status = "done" if scraping_jobs.get(query_key, {}).get('done', True) else "scraping"
+    status = "done" if scraping_jobs[query_key]['done'] else "scraping"
     return jsonify({"produse": produse, "status": status})
 
 

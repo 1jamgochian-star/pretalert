@@ -41,9 +41,12 @@
         {% if not produse %}
         <div id="loading" style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">
             <div style="font-size:2rem;margin-bottom:1rem;">⏳</div>
-            <p>Se caută produse pe eMAG... (poate dura 30-60 secunde)</p>
+            <p>Se caută produse pe eMAG...</p>
         </div>
         {% endif %}
+    </div>
+    <div id="scraping-banner" style="display:none;text-align:center;padding:0.75rem;color:#92400e;background:#fef3c7;border-radius:8px;margin-top:1rem;font-size:0.9rem;">
+        ⏳ Se caută mai multe produse pe eMAG...
     </div>
     <div id="paginare" style="display:none;text-align:center;margin-top:1.5rem;display:flex;align-items:center;justify-content:center;gap:0.75rem;">
         <button class="sort-btn" id="btn-prev">← Anterior</button>
@@ -58,17 +61,20 @@
     var grid = document.getElementById('produse-grid');
     var titlu = document.getElementById('rezultate-titlu');
     var sortareBar = document.getElementById('sortare-bar');
+    var perPaginaBar = document.getElementById('per-pagina-bar');
+    var paginareDiv = document.getElementById('paginare');
+    var paginareInfo = document.getElementById('paginare-info');
+    var btnPrev = document.getElementById('btn-prev');
+    var btnNext = document.getElementById('btn-next');
+    var scrapingBanner = document.getElementById('scraping-banner');
+
     var toateProdusele = {{ produse | tojson }};
     var vazuteIds = new Set(toateProdusele.map(function(p) { return p.id; }));
     var sortCurent = 'relevanta';
     var perPagina = 20;
     var paginaCurenta = 1;
     var intervalId = null;
-    var perPaginaBar = document.getElementById('per-pagina-bar');
-    var paginareDiv = document.getElementById('paginare');
-    var paginareInfo = document.getElementById('paginare-info');
-    var btnPrev = document.getElementById('btn-prev');
-    var btnNext = document.getElementById('btn-next');
+    var pollsWithoutNew = 0;
 
     var STORE_COLORS = {
         'emag': '#ff6900', 'dedeman': '#00843D', 'altex': '#e63946',
@@ -122,6 +128,12 @@
         }
     }
 
+    function stopPolling() {
+        clearInterval(intervalId);
+        intervalId = null;
+        scrapingBanner.style.display = 'none';
+    }
+
     if (toateProdusele.length > 0) reRender();
 
     document.querySelectorAll('#sortare-bar .sort-btn').forEach(function(btn) {
@@ -154,9 +166,11 @@
                 var produse = data.produse || [];
                 var status = data.status;
 
+                // Elimină loading-ul inițial dacă există
                 var loading = document.getElementById('loading');
                 if (loading) loading.remove();
 
+                // Adaugă DOAR produsele noi, fără să șteargă ce e deja în grid
                 var hadNew = false;
                 produse.forEach(function(p) {
                     if (!vazuteIds.has(p.id)) {
@@ -166,23 +180,29 @@
                     }
                 });
 
-                if (hadNew) reRender();
+                if (hadNew) {
+                    pollsWithoutNew = 0;
+                    reRender();
+                } else {
+                    pollsWithoutNew++;
+                }
 
                 var total = toateProdusele.length;
-                var visible = total > 0 ? '' : 'none';
-                sortareBar.style.display = visible;
-                perPaginaBar.style.display = visible;
+                sortareBar.style.display = total > 0 ? '' : 'none';
+                perPaginaBar.style.display = total > 0 ? '' : 'none';
 
                 if (status === 'scraping') {
-                    titlu.innerHTML = total + ' produse găsite &middot; <span style="color:#f59e0b;">⏳ Se caută mai multe...</span>';
+                    scrapingBanner.style.display = 'block';
+                    titlu.textContent = total + ' produse găsite pentru „' + query + '"';
                 } else {
+                    // Scraping terminat — oprește polling-ul
                     if (total === 0) {
                         grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">Niciun produs găsit. Încearcă altă căutare.</p>';
                         titlu.textContent = 'Niciun rezultat pentru „' + query + '"';
                     } else {
                         titlu.textContent = total + ' produse găsite pentru „' + query + '"';
                     }
-                    clearInterval(intervalId);
+                    stopPolling();
                 }
             })
             .catch(function() {});
