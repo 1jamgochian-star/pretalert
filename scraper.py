@@ -122,11 +122,13 @@ async def cauta_altex(query):
         else:
             poza_url = None
 
-        if not nume or not url_key or not pret:
+        sku = (p.get('sku') or '').strip()
+
+        if not nume or not url_key or not sku or not pret:
             continue
 
-        # Link produs: https://altex.ro/{url_key}
-        link = f"https://altex.ro/{url_key}"
+        # Link produs: https://altex.ro/{url_key}/cpd/{sku}/
+        link = f"https://altex.ro/{url_key}/cpd/{sku}/"
         rezultate.append({
             'emag_id': _slug_id('altex', link),
             'nume': nume,
