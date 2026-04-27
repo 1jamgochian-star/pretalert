@@ -120,19 +120,18 @@ async def cauta_altex(query):
         elif isinstance(price_data, (int, float)):
             pret = float(price_data)
 
-        # imagine
-        gallery = p.get('media_gallery') or []
-        poza_url = (
-            p.get('image')
-            or p.get('thumbnail')
-            or (gallery[0].get('url') if gallery else None)
-        )
+        # imagine — path relativ /media/catalog/product/a/b/xxx.jpg
+        raw_img = p.get('image') or p.get('thumbnail') or p.get('small_image') or ''
+        if raw_img:
+            img_path = raw_img.lstrip('/')          # "media/catalog/product/a/b/xxx.jpg"
+            if img_path.startswith('media/catalog/product/'):
+                img_path = img_path[len('media/catalog/product/'):]
+            poza_url = f"https://lcdn.altex.ro/resize/media/catalog/product/{img_path}"
+        else:
+            poza_url = None
 
         if not nume or not url_key or not pret:
             continue
-
-        if poza_url and poza_url.startswith('/'):
-            poza_url = 'https://altex.ro' + poza_url
 
         link = f"https://altex.ro/{url_key}"
         rezultate.append({

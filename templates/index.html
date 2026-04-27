@@ -37,6 +37,12 @@
             </div>
         </div>
     </div>
+    <div id="filtru-magazin" style="display:none;margin:0.75rem 0 1rem;">
+        <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            <span style="color:#94a3b8;font-size:0.8rem;white-space:nowrap;">Magazin:</span>
+            <div id="filtru-pills" style="display:flex;flex-wrap:wrap;gap:0.4rem;"></div>
+        </div>
+    </div>
     <div class="produse-grid" id="produse-grid">
         {% if not produse %}
         <div id="loading" style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">
@@ -75,6 +81,9 @@
     var paginaCurenta = 1;
     var intervalId = null;
     var pollsWithoutNew = 0;
+    var filtruSursa = 'toate';
+    var filtruBar = document.getElementById('filtru-magazin');
+    var filtruPills = document.getElementById('filtru-pills');
 
     var STORE_COLORS = {
         'emag': '#ff6900', 'dedeman': '#00843D', 'altex': '#e63946',
@@ -112,8 +121,42 @@
         return s;
     }
 
+    function produseVizibile() {
+        if (filtruSursa === 'toate') return toateProdusele;
+        return toateProdusele.filter(function(p) { return p.sursa === filtruSursa; });
+    }
+
+    function actualizeazaFiltru() {
+        var surse = [];
+        toateProdusele.forEach(function(p) {
+            if (p.sursa && surse.indexOf(p.sursa) === -1) surse.push(p.sursa);
+        });
+        if (surse.length < 2) { filtruBar.style.display = 'none'; return; }
+
+        filtruBar.style.display = 'block';
+        var pills = [{ key: 'toate', label: 'Toate', n: toateProdusele.length }];
+        surse.forEach(function(s) {
+            pills.push({ key: s, label: s, n: toateProdusele.filter(function(p) { return p.sursa === s; }).length });
+        });
+
+        filtruPills.innerHTML = pills.map(function(pill) {
+            var active = filtruSursa === pill.key;
+            return '<button class="sort-btn' + (active ? ' active' : '') + '" data-sursa="' + pill.key + '" style="font-size:0.78rem;padding:0.25rem 0.7rem;">' +
+                pill.label + ' <span style="opacity:0.6;">(' + pill.n + ')</span></button>';
+        }).join('');
+
+        filtruPills.querySelectorAll('button').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                filtruSursa = btn.dataset.sursa;
+                paginaCurenta = 1;
+                actualizeazaFiltru();
+                reRender();
+            });
+        });
+    }
+
     function reRender() {
-        var sorted = sorteaza(toateProdusele);
+        var sorted = sorteaza(produseVizibile());
         var totalPagini = Math.max(1, Math.ceil(sorted.length / perPagina));
         if (paginaCurenta > totalPagini) paginaCurenta = totalPagini;
         var start = (paginaCurenta - 1) * perPagina;
@@ -134,7 +177,7 @@
         scrapingBanner.style.display = 'none';
     }
 
-    if (toateProdusele.length > 0) reRender();
+    if (toateProdusele.length > 0) { actualizeazaFiltru(); reRender(); }
 
     document.querySelectorAll('#sortare-bar .sort-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -182,6 +225,7 @@
 
                 if (hadNew) {
                     pollsWithoutNew = 0;
+                    actualizeazaFiltru();
                     reRender();
                 } else {
                     pollsWithoutNew++;
@@ -196,11 +240,13 @@
                     titlu.textContent = total + ' produse găsite pentru „' + query + '"';
                 } else {
                     // Scraping terminat — oprește polling-ul
+                    actualizeazaFiltru();
                     if (total === 0) {
                         grid.innerHTML = '<p class="no-results" style="grid-column:1/-1">Niciun produs găsit. Încearcă altă căutare.</p>';
                         titlu.textContent = 'Niciun rezultat pentru „' + query + '"';
                     } else {
                         titlu.textContent = total + ' produse găsite pentru „' + query + '"';
+                        reRender();
                     }
                     stopPolling();
                 }
