@@ -83,7 +83,7 @@
         <h2>📈 Istoric prețuri</h2>
         <canvas id="graficPret"></canvas>
     </div>
-    
+
     <script>
         const istoric = {{ istoric|tojson }};
         const ctx = document.getElementById('graficPret').getContext('2d');
@@ -112,5 +112,66 @@
     {% else %}
     <p class="no-istoric">Istoricul se va construi în timp. Revino mâine!</p>
     {% endif %}
+
+    <div class="grafic-section" style="margin-top:2rem;">
+        <h2>🔍 Compară prețul pe alte magazine</h2>
+        <button id="btn-compara" onclick="cautaComparare()"
+                style="margin-top:0.75rem;padding:0.65rem 1.4rem;background:#f0a500;color:#0f1117;border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;">
+            Caută pe toate magazinele
+        </button>
+        <div id="comparare-loading" style="display:none;color:#94a3b8;margin-top:1rem;">⏳ Se caută...</div>
+        <div id="comparare-rezultate" style="display:none;margin-top:1rem;overflow-x:auto;"></div>
+    </div>
 </div>
+
+<script>
+function _storeColor(sursa) {
+    var s = (sursa || '').toLowerCase();
+    var colors = {emag:'#ff6900', dedeman:'#00843D', altex:'#e63946', flanco:'#0057b7', cel:'#2196F3'};
+    for (var k in colors) { if (s.indexOf(k) !== -1) return colors[k]; }
+    return '#666';
+}
+
+function cautaComparare() {
+    var btn = document.getElementById('btn-compara');
+    var loading = document.getElementById('comparare-loading');
+    var rez = document.getElementById('comparare-rezultate');
+    btn.disabled = true;
+    loading.style.display = 'block';
+    rez.style.display = 'none';
+
+    fetch('/api/compara?nume=' + encodeURIComponent({{ produs['nume']|tojson }}))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            loading.style.display = 'none';
+            var produse = data.produse || [];
+            if (!produse.length) {
+                rez.innerHTML = '<p style="color:#94a3b8;">Niciun rezultat găsit pe alte magazine.</p>';
+            } else {
+                var rows = produse.map(function(p) {
+                    var c = _storeColor(p.sursa);
+                    return '<tr>' +
+                        '<td><span style="background:' + c + ';color:#fff;padding:2px 9px;border-radius:4px;font-size:0.8rem;font-weight:600;">' + (p.sursa || '') + '</span></td>' +
+                        '<td style="font-weight:700;padding:0 1rem;">' + (p.pret ? p.pret.toFixed(2) + ' Lei' : '—') + '</td>' +
+                        '<td><a href="' + p.link + '" target="_blank" rel="noopener" style="padding:0.3rem 0.9rem;background:' + c + ';color:#fff;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;white-space:nowrap;">Cumpără</a></td>' +
+                        '</tr>';
+                }).join('');
+                rez.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">' +
+                    '<thead><tr style="color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.08);">' +
+                    '<th style="text-align:left;padding:0.4rem 0;">Magazin</th>' +
+                    '<th style="text-align:left;padding:0.4rem 1rem;">Preț</th>' +
+                    '<th></th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table>';
+            }
+            rez.style.display = 'block';
+            btn.disabled = false;
+        })
+        .catch(function() {
+            loading.style.display = 'none';
+            rez.innerHTML = '<p style="color:#e63946;">Eroare la căutare. Încearcă din nou.</p>';
+            rez.style.display = 'block';
+            btn.disabled = false;
+        });
+}
+</script>
 {% endblock %}

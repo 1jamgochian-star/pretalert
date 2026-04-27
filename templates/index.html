@@ -2,6 +2,12 @@
 {% block title %}{% if query %}{{ query }} – Prețuri România | PretAlert.ro{% else %}PretAlert.ro – Monitorizare prețuri eMAG, Altex, Flanco{% endif %}{% endblock %}
 {% block meta_description %}{% if query %}Compară prețuri pentru „{{ query }}" de la eMAG, Altex, Flanco, Dedeman și alte magazine online din România.{% else %}Monitorizare prețuri în timp real pe eMAG, Altex, Flanco, Dedeman. Setează alerte gratuite și fii primul care știe când prețul scade.{% endif %}{% endblock %}
 {% block content %}
+<style>
+.mag-row{display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;margin-top:0.75rem;}
+.mag-label{display:flex;align-items:center;gap:0.3rem;padding:0.25rem 0.7rem;border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:#1e293b;color:#e2e8f0;font-size:0.8rem;cursor:pointer;user-select:none;transition:opacity .15s;}
+.mag-label input{accent-color:var(--mag-color,#f0a500);width:13px;height:13px;cursor:pointer;}
+.mag-label:has(input:not(:checked)){opacity:0.45;}
+</style>
 <section class="hero">
     <h1>Monitorizează prețurile din România</h1>
     <p>Găsește cel mai bun preț și primește alerte când prețul scade</p>
@@ -11,6 +17,14 @@
                class="search-input" autofocus>
         <button type="submit" class="search-btn">🔍 Caută</button>
     </form>
+    <div class="mag-row">
+        <label class="mag-label" style="--mag-color:#ff6900"><input type="checkbox" class="mag-checkbox" value="eMAG" checked> eMAG</label>
+        <label class="mag-label" style="--mag-color:#e63946"><input type="checkbox" class="mag-checkbox" value="Altex" checked> Altex</label>
+        <label class="mag-label" style="--mag-color:#0057b7"><input type="checkbox" class="mag-checkbox" value="Flanco" checked> Flanco</label>
+        <label class="mag-label" style="--mag-color:#2196F3"><input type="checkbox" class="mag-checkbox" value="CEL" checked> CEL</label>
+        <label class="mag-label" style="--mag-color:#9c27b0"><input type="checkbox" class="mag-checkbox" value="PC Garage" checked> PC Garage</label>
+        <label class="mag-label" style="--mag-color:#00843D"><input type="checkbox" class="mag-checkbox" value="Dedeman" checked> Dedeman</label>
+    </div>
 </section>
 
 {% if query %}
@@ -121,9 +135,19 @@
         return s;
     }
 
+    function getMagazineActive() {
+        var checked = [];
+        document.querySelectorAll('.mag-checkbox:checked').forEach(function(cb) { checked.push(cb.value); });
+        return checked;
+    }
+
     function produseVizibile() {
-        if (filtruSursa === 'toate') return toateProdusele;
-        return toateProdusele.filter(function(p) { return p.sursa === filtruSursa; });
+        var activeMag = getMagazineActive();
+        var list = activeMag.length > 0
+            ? toateProdusele.filter(function(p) { return activeMag.indexOf(p.sursa) !== -1; })
+            : toateProdusele;
+        if (filtruSursa !== 'toate') list = list.filter(function(p) { return p.sursa === filtruSursa; });
+        return list;
     }
 
     function actualizeazaFiltru() {
@@ -202,8 +226,19 @@
     btnPrev.addEventListener('click', function() { if (paginaCurenta > 1) { paginaCurenta--; reRender(); window.scrollTo(0, 0); } });
     btnNext.addEventListener('click', function() { paginaCurenta++; reRender(); window.scrollTo(0, 0); });
 
+    document.querySelectorAll('.mag-checkbox').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            paginaCurenta = 1;
+            filtruSursa = 'toate';
+            actualizeazaFiltru();
+            reRender();
+        });
+    });
+
     function poll() {
-        fetch('/api/search?q=' + encodeURIComponent(query))
+        var magParams = getMagazineActive().map(function(m) { return 'mag=' + encodeURIComponent(m); }).join('&');
+        var apiUrl = '/api/search?q=' + encodeURIComponent(query) + (magParams ? '&' + magParams : '');
+        fetch(apiUrl)
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 var produse = data.produse || [];

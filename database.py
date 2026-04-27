@@ -200,28 +200,30 @@ def get_istoric_vizite(user_id):
     conn.close()
     return rows_to_list(vizite)
 
-def cauta_produse_db(query):
+def cauta_produse_db(query, surse=None):
     conn = get_db()
-    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cuvinte = query.lower().split()
     minim = max(1, math.ceil(len(cuvinte) / 2))
     score_expr = " + ".join([f"CASE WHEN LOWER(nume) LIKE %s THEN 1 ELSE 0 END" for _ in cuvinte])
     valori = [f'%{cuvant}%' for cuvant in cuvinte]
-    cuvant_obligatoriu = next((c for c in cuvinte if len(c) >= 4), None)
+    cuvant_obligatoriu = next((cv for cv in cuvinte if len(cv) >= 4), None)
+    sursa_clause = " AND sursa = ANY(%s)" if surse else ""
+    sursa_val = [surse] if surse else []
     if cuvant_obligatoriu:
-        c.execute(f"""
+        cur.execute(f"""
             SELECT * FROM (SELECT *, ({score_expr}) AS scor FROM produse) sub
-            WHERE scor >= %s AND LOWER(nume) LIKE %s
+            WHERE scor >= %s AND LOWER(nume) LIKE %s{sursa_clause}
             ORDER BY scor DESC
-        """, valori + [minim, f'%{cuvant_obligatoriu}%'])
+        """, valori + [minim, f'%{cuvant_obligatoriu}%'] + sursa_val)
     else:
-        c.execute(f"""
+        cur.execute(f"""
             SELECT * FROM (SELECT *, ({score_expr}) AS scor FROM produse) sub
-            WHERE scor >= %s
+            WHERE scor >= %s{sursa_clause}
             ORDER BY scor DESC
-        """, valori + [minim])
-    produse = c.fetchall()
-    print(f"cauta_produse_db('{query}'): {len(produse)} produse (minim {minim}/{len(cuvinte)}, obligatoriu: '{cuvant_obligatoriu}')")
+        """, valori + [minim] + sursa_val)
+    produse = cur.fetchall()
+    print(f"cauta_produse_db('{query}', surse={surse}): {len(produse)} produse (minim {minim}/{len(cuvinte)}, obligatoriu: '{cuvant_obligatoriu}')")
     conn.close()
     return rows_to_list(produse)
 

@@ -178,17 +178,37 @@ def api_search():
         return jsonify({"produse": [], "status": "done"})
 
     query_key = query.lower()
-    # Returnează imediat ce e în DB
-    produse = cauta_produse_db(query)
+    mag_list = request.args.getlist('mag') or None
+    produse = cauta_produse_db(query, surse=mag_list)
 
     if query_key not in scraping_jobs:
-        # Pornește scraping pagina 1 în background
         scraping_jobs[query_key] = {'done': False}
         t = threading.Thread(target=_run_background_scrape, args=(query,), daemon=True)
         t.start()
 
     status = "done" if scraping_jobs[query_key]['done'] else "scraping"
     return jsonify({"produse": produse, "status": status})
+
+
+@app.route('/api/compara')
+def api_compara():
+    nume = request.args.get('nume', '')
+    if not nume:
+        return jsonify({"produse": []})
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        rezultate = loop.run_until_complete(cauta_toate(nume))
+    except Exception as e:
+        print(f"Compara eroare: {e}")
+        rezultate = []
+    finally:
+        loop.close()
+    produse = sorted(
+        [r for r in rezultate if r.get('pret')],
+        key=lambda x: x['pret']
+    )
+    return jsonify({"produse": produse})
 
 
 SURSE_VALIDE = {
