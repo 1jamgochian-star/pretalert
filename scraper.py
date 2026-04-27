@@ -120,15 +120,44 @@ async def cauta_emag_pagina(query, pagina=1):
     except Exception as e:
         print(f"Eroare eMAG pagina {pagina}: {e}")
         return []
-
-async def cauta_emag(query, pagini=1):
-    toate_rezultatele = []
-    for pagina in range(1, pagini + 1):
-        rezultate = await cauta_emag_pagina(query, pagina)
-        toate_rezultatele.extend(rezultate)
-        if not rezultate:
-            break
-    return toate_rezultatele
+async def cauta_emag(query):
+    import requests as req
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'ro-RO,ro;q=0.9',
+    }
+    emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+    try:
+        r = req.get(emag_url, headers=headers, timeout=30)
+        soup = BeautifulSoup(r.text, 'html.parser')
+        produse = soup.select('.card-item')
+        rezultate = []
+        for p in produse:
+            nume = p.select_one('.card-v2-title')
+            pret = p.select_one('.product-new-price')
+            link = p.select_one('a.js-product-url')
+            if not nume or not pret or not link:
+                continue
+            poza = p.select_one('img')
+            poza_url = None
+            if poza:
+                poza_url = poza.get('src') or poza.get('data-src') or poza.get('data-lazy-src')
+            pret_float = curata_pret(pret.text)
+            link_url = link['href']
+            emag_id = extrage_emag_id(link_url)
+            rezultate.append({
+                "emag_id": emag_id,
+                "nume": nume.text.strip(),
+                "pret": pret_float,
+                "pret_text": pret.text.strip(),
+                "link": link_url,
+                "poza": poza_url,
+                "magazin": "eMAG"
+            })
+        return rezultate
+    except Exception as e:
+        print(f"Eroare scraper: {e}")
+        return []
 
 async def cauta_emag_multe_pagini(query):
     return await cauta_emag(query, pagini=3)
