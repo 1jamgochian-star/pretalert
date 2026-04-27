@@ -1,71 +1,259 @@
-import requests
+import os
 import asyncio
+import hashlib
+import aiohttp
 from bs4 import BeautifulSoup
 from database import salveaza_produs
+from urllib.parse import quote
 import re
 
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept-Language': 'ro-RO,ro;q=0.9',
-}
+SCRAPER_API_KEY = os.getenv('SCRAPER_API_KEY', '')
+
+
+def _scraper_url(target_url, render=False):
+    params = f"api_key={SCRAPER_API_KEY}&url={quote(target_url, safe='')}"
+    if render:
+        params += "&render=true"
+    return f"http://api.scraperapi.com?{params}"
+
+
+def _slug_id(prefix, url):
+    return prefix + '_' + hashlib.md5(url.encode()).hexdigest()[:12]
+
 
 def extrage_emag_id(link):
     match = re.search(r'/pd/([A-Z0-9]+)/', link)
     return match.group(1) if match else link.split('/')[-2]
 
+
 def curata_pret(pret_text):
-    pret_text = pret_text.replace('Lei', '').replace('lei', '').strip()
+    pret_text = pret_text.replace('Lei', '').replace('lei', '').replace('RON', '').strip()
     pret_text = pret_text.replace('.', '').replace(',', '.')
     pret_text = re.sub(r'[^\d.]', '', pret_text)
     try:
         return float(pret_text)
-    except:
+    except Exception:
         return None
 
-async def cauta_emag(query, pagina=1):
-    if pagina == 1:
-        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
-    else:
-        emag_url = f"https://www.emag.ro/search/{query.replace(' ', '+')}/p{pagina}/c"
+
+async def _fetch(session, url, render=False, timeout=45):
+    api_url = _scraper_url(url, render=render)
     try:
-        r = requests.get(emag_url, headers=HEADERS, timeout=30)
-        soup = BeautifulSoup(r.text, 'html.parser')
-        produse = soup.select('.card-item')
-        rezultate = []
-        for p in produse:
-            nume = p.select_one('.card-v2-title')
-            pret = p.select_one('.product-new-price')
-            link = p.select_one('a.js-product-url')
-            if not nume or not pret or not link:
-                continue
-            poza = p.select_one('img')
-            poza_url = None
-            if poza:
-                poza_url = poza.get('src') or poza.get('data-src') or poza.get('data-lazy-src')
-            pret_float = curata_pret(pret.text)
-            link_url = link['href']
-            emag_id = extrage_emag_id(link_url)
-            rezultate.append({
-                "emag_id": emag_id,
-                "nume": nume.text.strip(),
-                "pret": pret_float,
-                "pret_text": pret.text.strip(),
-                "link": link_url,
-                "poza": poza_url,
-                "magazin": "eMAG"
-            })
-        return rezultate
+        async with session.get(api_url, timeout=aiohttp.ClientTimeout(total=timeout)) as r:
+            return await r.text()
     except Exception as e:
-        print(f"Eroare scraper: {e}")
+        print(f"Fetch eroare {url[:60]}: {e}")
+        return ''
+
+
+# ── Scrapers per magazin ─────────────────────────────────────────────────────
+
+async def _cauta_emag(session, query, pagina=1):
+    if pagina == 1:
+        url = f"https://www.emag.ro/search/{query.replace(' ', '+')}"
+    else:
+        url = f"https://www.emag.ro/search/{query.replace(' ', '+')}/p{pagina}/c"
+    html = await _fetch(session, url)
+    if not html:
         return []
+    soup = BeautifulSoup(html, 'html.parser')
+    rezultate = []
+    for p in soup.select('.card-item'):
+        nume = p.select_one('.card-v2-title')
+        pret = p.select_one('.product-new-price')
+        link = p.select_one('a.js-product-url')
+        if not nume or not pret or not link:
+            continue
+        poza = p.select_one('img')
+        poza_url = None
+        if poza:
+            poza_url = poza.get('src') or poza.get('data-src') or poza.get('data-lazy-src')
+        pret_float = curata_pret(pret.text)
+        link_url = link['href']
+        rezultate.append({
+            'emag_id': extrage_emag_id(link_url),
+            'nume': nume.text.strip(),
+            'pret': pret_float,
+            'link': link_url,
+            'poza': poza_url,
+            'sursa': 'eMAG',
+        })
+    print(f"eMAG: {len(rezultate)} produse")
+    return rezultate
+
+
+async def _cauta_altex(session, query):
+    url = f"https://altex.ro/cauta/{quote(query, safe='')}/"
+    html = await _fetch(session, url, render=True)
+    if not html:
+        return []
+    soup = BeautifulSoup(html, 'html.parser')
+    rezultate = []
+    for p in soup.select('article.Product, .Product'):
+        link_el = (
+            p.select_one('a[data-cy="product-name"]') or
+            p.select_one('a.Product-name') or
+            p.select_one('h2 a, h3 a')
+        )
+        pret_el = p.select_one('.Price, .product-price, [class*="Price"]')
+        if not link_el or not pret_el:
+            continue
+        link_url = link_el.get('href', '')
+        if link_url and not link_url.startswith('http'):
+            link_url = 'https://altex.ro' + link_url
+        pret_float = curata_pret(pret_el.get_text())
+        poza_el = p.select_one('img')
+        poza_url = poza_el.get('src') or poza_el.get('data-src') if poza_el else None
+        if not link_url or not pret_float:
+            continue
+        rezultate.append({
+            'emag_id': _slug_id('altex', link_url),
+            'nume': link_el.text.strip(),
+            'pret': pret_float,
+            'link': link_url,
+            'poza': poza_url,
+            'sursa': 'Altex',
+        })
+    print(f"Altex: {len(rezultate)} produse")
+    return rezultate
+
+
+async def _cauta_flanco(session, query):
+    url = f"https://www.flanco.ro/catalogsearch/result/?q={quote(query, safe='')}"
+    html = await _fetch(session, url)
+    if not html:
+        return []
+    soup = BeautifulSoup(html, 'html.parser')
+    rezultate = []
+    for p in soup.select('li.product-item'):
+        link_el = p.select_one('a.product-item-link')
+        pret_el = p.select_one('span.price')
+        if not link_el or not pret_el:
+            continue
+        link_url = link_el.get('href', '')
+        pret_float = curata_pret(pret_el.get_text())
+        poza_el = p.select_one('img.product-image-photo, img')
+        poza_url = poza_el.get('src') if poza_el else None
+        if not link_url or not pret_float:
+            continue
+        rezultate.append({
+            'emag_id': _slug_id('flanco', link_url),
+            'nume': link_el.text.strip(),
+            'pret': pret_float,
+            'link': link_url,
+            'poza': poza_url,
+            'sursa': 'Flanco',
+        })
+    print(f"Flanco: {len(rezultate)} produse")
+    return rezultate
+
+
+async def _cauta_cel(session, query):
+    url = f"https://www.cel.ro/cauta/?search_term={quote(query, safe='')}"
+    html = await _fetch(session, url)
+    if not html:
+        return []
+    soup = BeautifulSoup(html, 'html.parser')
+    rezultate = []
+    for p in soup.select('.product-item, .produs-item, .prd_box, [class*="product-item"]'):
+        link_el = (
+            p.select_one('a[href*="/produse/"]') or
+            p.select_one('h2 a, h3 a, .product-name a, .title a')
+        )
+        pret_el = p.select_one('.price, .pret, .Price, [class*="price"], [class*="pret"]')
+        if not link_el or not pret_el:
+            continue
+        link_url = link_el.get('href', '')
+        if link_url and not link_url.startswith('http'):
+            link_url = 'https://www.cel.ro' + link_url
+        pret_float = curata_pret(pret_el.get_text())
+        poza_el = p.select_one('img')
+        poza_url = poza_el.get('src') if poza_el else None
+        if not link_url or not pret_float:
+            continue
+        rezultate.append({
+            'emag_id': _slug_id('cel', link_url),
+            'nume': link_el.text.strip(),
+            'pret': pret_float,
+            'link': link_url,
+            'poza': poza_url,
+            'sursa': 'CEL',
+        })
+    print(f"CEL: {len(rezultate)} produse")
+    return rezultate
+
+
+async def _cauta_pcgarage(session, query):
+    url = f"https://www.pcgarage.ro/cauta/{quote(query, safe='')}/"
+    html = await _fetch(session, url)
+    if not html:
+        return []
+    soup = BeautifulSoup(html, 'html.parser')
+    rezultate = []
+    for p in soup.select('.product-layout, .product-item'):
+        link_el = (
+            p.select_one('.caption h4 a') or
+            p.select_one('h4 a, .product-title a')
+        )
+        pret_el = p.select_one('.price-new, .price, [class*="price"]')
+        if not link_el or not pret_el:
+            continue
+        link_url = link_el.get('href', '')
+        if link_url and not link_url.startswith('http'):
+            link_url = 'https://www.pcgarage.ro' + link_url
+        pret_float = curata_pret(pret_el.get_text())
+        poza_el = p.select_one('.image img, img')
+        poza_url = poza_el.get('src') or poza_el.get('data-src') if poza_el else None
+        if not link_url or not pret_float:
+            continue
+        rezultate.append({
+            'emag_id': _slug_id('pcg', link_url),
+            'nume': link_el.text.strip(),
+            'pret': pret_float,
+            'link': link_url,
+            'poza': poza_url,
+            'sursa': 'PC Garage',
+        })
+    print(f"PC Garage: {len(rezultate)} produse")
+    return rezultate
+
+
+# ── API public ───────────────────────────────────────────────────────────────
+
+async def cauta_emag(query, pagina=1):
+    """Compatibilitate cu app.py — caută doar pe eMAG."""
+    async with aiohttp.ClientSession() as session:
+        return await _cauta_emag(session, query, pagina)
+
 
 async def cauta_toate(query):
-    return await cauta_emag(query)
+    """Caută pe toate magazinele în paralel cu asyncio.gather()."""
+    async with aiohttp.ClientSession() as session:
+        rezultate_list = await asyncio.gather(
+            _cauta_emag(session, query),
+            _cauta_altex(session, query),
+            _cauta_flanco(session, query),
+            _cauta_cel(session, query),
+            _cauta_pcgarage(session, query),
+            return_exceptions=True,
+        )
+    combined = []
+    for r in rezultate_list:
+        if isinstance(r, list):
+            combined.extend(r)
+        elif isinstance(r, Exception):
+            print(f"Eroare magazin: {r}")
+    print(f"Total toate magazinele: {len(combined)} produse")
+    return combined
+
 
 async def scrape_produs(link):
     try:
-        r = requests.get(link, headers=HEADERS, timeout=30)
-        soup = BeautifulSoup(r.text, 'html.parser')
+        async with aiohttp.ClientSession() as session:
+            html = await _fetch(session, link)
+        if not html:
+            return None
+        soup = BeautifulSoup(html, 'html.parser')
         nume = soup.select_one('h1.page-header')
         pret = soup.select_one('.product-new-price')
         poza = soup.select_one('img#main-image')
@@ -77,15 +265,16 @@ async def scrape_produs(link):
         if poza:
             poza_url = poza.get('src') or poza.get('data-src')
         return {
-            "emag_id": emag_id,
-            "nume": nume.text.strip() if nume else "Produs",
-            "pret": pret_float,
-            "link": link,
-            "poza": poza_url
+            'emag_id': emag_id,
+            'nume': nume.text.strip() if nume else 'Produs',
+            'pret': pret_float,
+            'link': link,
+            'poza': poza_url,
         }
     except Exception as e:
         print(f"Eroare scrape produs: {e}")
         return None
+
 
 def salveaza_rezultate(rezultate):
     produse_salvate = []
@@ -94,7 +283,8 @@ def salveaza_rezultate(rezultate):
             try:
                 produs_id = salveaza_produs(
                     r['emag_id'], r['nume'],
-                    r['link'], r.get('poza'), r['pret']
+                    r['link'], r.get('poza'), r['pret'],
+                    r.get('sursa', 'eMAG'),
                 )
                 produse_salvate.append({**r, 'id': produs_id})
             except Exception as e:

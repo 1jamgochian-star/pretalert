@@ -60,16 +60,16 @@ def _run_background_scrape(query):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
-            rezultate = loop.run_until_complete(cauta_emag(query))
+            rezultate = loop.run_until_complete(cauta_toate(query))
             if rezultate:
                 salveaza_rezultate(rezultate)
-                print(f"Bg scrape p1: {len(rezultate)} produse")
+                print(f"Bg scrape terminat: {len(rezultate)} produse total")
         except Exception as e:
             print(f"Bg scrape eroare: {e}")
         loop.close()
     finally:
         scraping_jobs[query.lower()]['done'] = True
-        print(f"Bg scrape terminat: '{query}'")
+        print(f"Bg scrape done: '{query}'")
 start_scheduler()
 
 @app.after_request
