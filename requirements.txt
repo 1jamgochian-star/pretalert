@@ -1,4 +1,5 @@
 aiohappyeyeballs==2.6.1
+curl-cffi>=0.7
 aiohttp==3.13.5
 aiosignal==1.4.0
 APScheduler==3.11.2

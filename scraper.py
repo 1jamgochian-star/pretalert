@@ -3,6 +3,7 @@ import asyncio
 import hashlib
 import aiohttp
 from bs4 import BeautifulSoup
+from curl_cffi.requests import AsyncSession as CurlSession
 from database import salveaza_produs
 from urllib.parse import quote
 import re
@@ -82,39 +83,68 @@ async def _cauta_emag(session, query, pagina=1):
     return rezultate
 
 
-async def _cauta_altex(session, query):
-    url = f"https://altex.ro/cauta/{quote(query, safe='')}/"
-    html = await _fetch(session, url, render=True)
-    if not html:
+async def cauta_altex(query):
+    """Caută pe Altex via API-ul oficial Fenrir (fără ScraperAPI)."""
+    api_url = (
+        f"https://fenrir.altex.ro/v2/catalog/search/{quote(query, safe='')}?size=48"
+    )
+    try:
+        async with CurlSession() as session:
+            r = await session.get(api_url, impersonate="chrome110", timeout=30)
+            data = r.json()
+    except Exception as e:
+        print(f"Altex API eroare: {e}")
         return []
-    soup = BeautifulSoup(html, 'html.parser')
+
+    hits = (
+        data.get('hits')
+        or data.get('products')
+        or (data.get('data') or {}).get('hits')
+        or []
+    )
+
     rezultate = []
-    for p in soup.select('article.Product, .Product'):
-        link_el = (
-            p.select_one('a[data-cy="product-name"]') or
-            p.select_one('a.Product-name') or
-            p.select_one('h2 a, h3 a')
+    for p in hits:
+        nume = (p.get('name') or '').strip()
+        url_key = p.get('url_key', '')
+
+        # preț — structură RON nested
+        pret = None
+        price_data = p.get('price', {})
+        if isinstance(price_data, dict):
+            ron = price_data.get('RON') or price_data.get('ron') or {}
+            if isinstance(ron, dict):
+                pret = ron.get('default') or ron.get('final') or ron.get('min')
+            elif isinstance(ron, (int, float)):
+                pret = float(ron)
+        elif isinstance(price_data, (int, float)):
+            pret = float(price_data)
+
+        # imagine
+        gallery = p.get('media_gallery') or []
+        poza_url = (
+            p.get('image')
+            or p.get('thumbnail')
+            or (gallery[0].get('url') if gallery else None)
         )
-        pret_el = p.select_one('.Price, .product-price, [class*="Price"]')
-        if not link_el or not pret_el:
+
+        if not nume or not url_key or not pret:
             continue
-        link_url = link_el.get('href', '')
-        if link_url and not link_url.startswith('http'):
-            link_url = 'https://altex.ro' + link_url
-        pret_float = curata_pret(pret_el.get_text())
-        poza_el = p.select_one('img')
-        poza_url = poza_el.get('src') or poza_el.get('data-src') if poza_el else None
-        if not link_url or not pret_float:
-            continue
+
+        if poza_url and poza_url.startswith('/'):
+            poza_url = 'https://altex.ro' + poza_url
+
+        link = f"https://altex.ro/{url_key}"
         rezultate.append({
-            'emag_id': _slug_id('altex', link_url),
-            'nume': link_el.text.strip(),
-            'pret': pret_float,
-            'link': link_url,
+            'emag_id': _slug_id('altex', link),
+            'nume': nume,
+            'pret': float(pret),
+            'link': link,
             'poza': poza_url,
             'sursa': 'Altex',
         })
-    print(f"Altex: {len(rezultate)} produse")
+
+    print(f"Altex API: {len(rezultate)} produse")
     return rezultate
 
 
@@ -231,7 +261,7 @@ async def cauta_toate(query):
     async with aiohttp.ClientSession() as session:
         rezultate_list = await asyncio.gather(
             _cauta_emag(session, query),
-            _cauta_altex(session, query),
+            cauta_altex(query),          # curl_cffi — sesiune proprie
             _cauta_flanco(session, query),
             _cauta_cel(session, query),
             _cauta_pcgarage(session, query),
