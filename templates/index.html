@@ -9,6 +9,7 @@
 .hero-eyebrow    { font-size:.75rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#f0a500; margin-bottom:.9rem; }
 .hero-h1         { font-size:3rem; font-weight:900; line-height:1.15; color:#fff; margin-bottom:.7rem; }
 .hero-h1 span    { color:#f0a500; }
+.hero-h1 .accent { color:#f0a500; display:block; font-size:2.6rem; }
 .hero-sub        { color:#64748b; font-size:1.05rem; margin-bottom:2.5rem; }
 
 /* ── Search bar ───────────────────────────────────────────────── */
@@ -112,9 +113,10 @@
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <section class="hero {% if query %}hero--compact{% endif %}">
     {% if not query %}
-    <div class="hero-badge"><span class="hero-badge-dot"></span>Live · 6 magazine monitorizate</div>
-    <h1 class="hero-h1">Găsește cel mai bun <span>preț</span><br>din România</h1>
-    <p class="hero-sub">Compară live pe eMAG, Altex, Flanco și altele · Alerte gratuite când prețul scade</p>
+    <div class="hero-bg-glow"></div>
+    <div class="hero-badge">Urmărim prețurile din România</div>
+    <h1 class="hero-h1">Nu plăti mai mult decât trebuie.<span class="accent">Găsește cel mai bun preț instant.</span></h1>
+    <p class="hero-sub">Monitorizăm milioane de produse de pe eMAG, Altex, CEL și alte magazine. Alerte gratuite când prețul scade.</p>
     {% endif %}
     <div class="search-wrap">
         <form action="/" method="GET">
