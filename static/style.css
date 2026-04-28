@@ -582,3 +582,91 @@ footer {
         font-size: 1.4rem;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATIONS — PretAlert.ro
+═══════════════════════════════════════════════════════════ */
+
+/* ── 1. Logo float ──────────────────────────────────────── */
+.logo img {
+    animation: logo-float 4s ease-in-out infinite;
+    display: block;
+}
+@keyframes logo-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-4px); }
+}
+
+/* ── 2. Card fade-in-up (delays set per-card by JS) ──────── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+.card-produs {
+    animation: fadeInUp .38s ease both;
+    will-change: transform;
+}
+
+/* ── 3. Price glow pulse ────────────────────────────────── */
+@keyframes price-glow {
+    0%, 100% { text-shadow: 0 0 6px rgba(240,165,0,.12); }
+    50%       { text-shadow: 0 0 18px rgba(240,165,0,.55), 0 0 32px rgba(240,165,0,.14); }
+}
+.pret, .card-pret, .pret-curent {
+    animation: price-glow 3s ease-in-out infinite;
+}
+
+/* ── 4. Ripple on .search-btn ───────────────────────────── */
+.search-btn { position: relative; overflow: hidden; }
+.ripple-wave {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,.28);
+    width: 120px; height: 120px;
+    margin-top: -60px; margin-left: -60px;
+    transform: scale(0);
+    animation: ripple-anim .6s linear forwards;
+    pointer-events: none;
+}
+@keyframes ripple-anim {
+    to { transform: scale(4); opacity: 0; }
+}
+
+/* ── 5. Scroll reveal for feature cards ─────────────────── */
+.reveal-ready {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity .5s ease, transform .5s ease;
+}
+.feature-card.reveal-ready:nth-child(2),
+.feature.reveal-ready:nth-child(2) { transition-delay: .11s; }
+.feature-card.reveal-ready:nth-child(3),
+.feature.reveal-ready:nth-child(3) { transition-delay: .22s; }
+.reveal-visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* ── 6. Hero radial ambient glow ────────────────────────── */
+.hero { position: relative; overflow: hidden; }
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    width: 720px; height: 560px;
+    background: radial-gradient(ellipse at center, rgba(240,165,0,.075) 0%, transparent 65%);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: hero-glow 5s ease-in-out infinite alternate;
+}
+.hero > *:not(.particles-canvas) { position: relative; z-index: 1; }
+@keyframes hero-glow {
+    from { opacity: .5; transform: translateX(-50%) scale(.97); }
+    to   { opacity: 1;  transform: translateX(-50%) scale(1.1); }
+}
+
+/* ── 7. Disable CSS hover transform for JS 3D tilt ─────── */
+@media (hover: hover) and (pointer: fine) {
+    .card-produs:hover { transform: none; }
+}
