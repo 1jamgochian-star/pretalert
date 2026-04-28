@@ -9,7 +9,6 @@
 .hero-eyebrow    { font-size:.75rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#f0a500; margin-bottom:.9rem; }
 .hero-h1         { font-size:3rem; font-weight:900; line-height:1.15; color:#fff; margin-bottom:.7rem; }
 .hero-h1 span    { color:#f0a500; }
-.hero-h1 .accent { color:#f0a500; display:block; font-size:2.6rem; }
 .hero-sub        { color:#64748b; font-size:1.05rem; margin-bottom:2.5rem; }
 
 /* ── Search bar ───────────────────────────────────────────────── */
@@ -113,10 +112,9 @@
 <!-- ── HERO ─────────────────────────────────────────────────────── -->
 <section class="hero {% if query %}hero--compact{% endif %}">
     {% if not query %}
-    <div class="hero-bg-glow"></div>
-    <div class="hero-badge">Urmărim prețurile din România</div>
-    <h1 class="hero-h1">Nu plăti mai mult decât trebuie.<span class="accent">Găsește cel mai bun preț instant.</span></h1>
-    <p class="hero-sub">Monitorizăm milioane de produse de pe eMAG, Altex, CEL și alte magazine. Alerte gratuite când prețul scade.</p>
+    <div class="hero-eyebrow">🇷🇴 Comparator de prețuri</div>
+    <h1 class="hero-h1">Găsește cel mai bun <span>preț</span><br>din România</h1>
+    <p class="hero-sub">Compară live pe eMAG, Altex, Flanco și altele · Alerte gratuite când prețul scade</p>
     {% endif %}
     <div class="search-wrap">
         <form action="/" method="GET">
@@ -135,7 +133,6 @@
             <label class="mag-toggle" style="--mc:#7c3aed"><input type="checkbox" class="mag-checkbox" value="PC Garage" checked><span class="mag-dot"></span>PC Garage</label>
             <label class="mag-toggle" style="--mc:#00843D"><input type="checkbox" class="mag-checkbox" value="Dedeman" checked><span class="mag-dot"></span>Dedeman</label>
         </div>
-        <p class="search-stats">Peste <span>500.000</span> produse monitorizate · actualizare zilnică</p>
     </div>
 </section>
 
@@ -410,8 +407,6 @@
 
 {% else %}
 <!-- ── HOME — feature cards ──────────────────────────────────────── -->
-<p class="section-label">De ce PretAlert?</p>
-<h2 class="section-title">Economisești timp și bani</h2>
 <div class="features-grid">
     <a href="/?q=laptop" class="feature-card">
         <div class="fc-icon">📊</div>

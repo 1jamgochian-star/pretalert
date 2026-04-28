@@ -149,130 +149,62 @@
     {% endif %}
 
     <div class="grafic-section" style="margin-top:2rem;">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.8rem;margin-bottom:1.2rem;">
-            <h2 style="margin:0;">🔍 Compară prețul pe alte magazine</h2>
-            <button id="btn-compara" onclick="cautaComparare()"
-                    style="padding:.5rem 1.2rem;background:rgba(240,165,0,.1);border:1px solid rgba(240,165,0,.3);color:#f0a500;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s;">
-                Caută pe toate magazinele
-            </button>
-        </div>
-        <!-- Stats bar -->
-        <div id="compara-stats" style="display:none;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.1rem;">
-            <div style="background:#0f1117;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:.8rem 1rem;">
-                <div style="font-size:.65rem;color:#4a5568;text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:.3rem;">Cel mai mic preț</div>
-                <div id="cs-min" style="font-size:1rem;font-weight:800;color:#22c55e;">—</div>
-            </div>
-            <div style="background:#0f1117;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:.8rem 1rem;">
-                <div style="font-size:.65rem;color:#4a5568;text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:.3rem;">Preț mediu</div>
-                <div id="cs-avg" style="font-size:1rem;font-weight:800;color:#f0a500;">—</div>
-            </div>
-            <div style="background:#0f1117;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:.8rem 1rem;">
-                <div style="font-size:.65rem;color:#4a5568;text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:.3rem;">Cel mai mare preț</div>
-                <div id="cs-max" style="font-size:1rem;font-weight:800;color:#f87171;">—</div>
-            </div>
-            <div style="background:#0f1117;border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:.8rem 1rem;">
-                <div style="font-size:.65rem;color:#4a5568;text-transform:uppercase;letter-spacing:.09em;font-weight:600;margin-bottom:.3rem;">Oferte găsite</div>
-                <div id="cs-cnt" style="font-size:1rem;font-weight:800;color:#e2e8f0;">—</div>
-            </div>
-        </div>
-        <!-- Table -->
-        <div id="comparare-loading" style="display:none;color:#94a3b8;padding:.8rem 0;display:none;align-items:center;gap:.5rem;">
-            <div style="display:flex;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:#f0a500;display:inline-block;animation:dotpulse 1.4s ease-in-out infinite;"></span><span style="width:6px;height:6px;border-radius:50%;background:#f0a500;display:inline-block;animation:dotpulse 1.4s ease-in-out .22s infinite;"></span><span style="width:6px;height:6px;border-radius:50%;background:#f0a500;display:inline-block;animation:dotpulse 1.4s ease-in-out .44s infinite;"></span></div>
-            <span>Se caută pe toate magazinele...</span>
-        </div>
-        <div id="comparare-rezultate" style="display:none;overflow-x:auto;border-radius:14px;border:1px solid rgba(255,255,255,.06);overflow:hidden;"></div>
+        <h2>🔍 Compară prețul pe alte magazine</h2>
+        <button id="btn-compara" onclick="cautaComparare()"
+                style="margin-top:0.75rem;padding:0.65rem 1.4rem;background:#f0a500;color:#0f1117;border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;">
+            Caută pe toate magazinele
+        </button>
+        <div id="comparare-loading" style="display:none;color:#94a3b8;margin-top:1rem;">⏳ Se caută...</div>
+        <div id="comparare-rezultate" style="display:none;margin-top:1rem;overflow-x:auto;"></div>
     </div>
 </div>
 
-<style>
-.crow-ref { display:grid; grid-template-columns:120px 1fr 110px 120px; align-items:center; padding:.9rem 1.2rem; border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
-.crow-ref:last-child { border-bottom:none; }
-.crow-ref:hover { background:rgba(255,255,255,.025); }
-.crow-ref.best-row { background:rgba(34,197,94,.05); }
-.crow-ref.best-row:hover { background:rgba(34,197,94,.09); }
-.cth-ref { display:grid; grid-template-columns:120px 1fr 110px 120px; padding:.7rem 1.2rem; background:rgba(255,255,255,.02); border-bottom:1px solid rgba(255,255,255,.06); }
-.cth-ref span { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:#4a5568; }
-.store-badge { display:inline-flex; align-items:center; gap:5px; border-radius:7px; padding:4px 9px; font-size:.72rem; font-weight:700; border:1px solid; }
-</style>
-
 <script>
-function _storeKey(s) {
-    s = (s || '').toLowerCase();
-    if (s.indexOf('emag') !== -1)    return 'emag';
-    if (s.indexOf('altex') !== -1)   return 'altex';
-    if (s.indexOf('flanco') !== -1)  return 'flanco';
-    if (s.indexOf('cel') !== -1)     return 'cel';
-    if (s.indexOf('dedeman') !== -1) return 'dedeman';
-    if (s.indexOf('garage') !== -1)  return 'pcgarage';
-    return 'other';
+function _storeColor(sursa) {
+    var s = (sursa || '').toLowerCase();
+    var colors = {emag:'#ff6900', dedeman:'#00843D', altex:'#e63946', flanco:'#0057b7', cel:'#2196F3'};
+    for (var k in colors) { if (s.indexOf(k) !== -1) return colors[k]; }
+    return '#666';
 }
-var STORE_STYLES = {
-    emag:    { bg:'rgba(240,165,0,.12)', border:'rgba(240,165,0,.25)', color:'#f0a500' },
-    altex:   { bg:'rgba(59,130,246,.12)', border:'rgba(59,130,246,.28)', color:'#60a5fa' },
-    flanco:  { bg:'rgba(239,68,68,.12)', border:'rgba(239,68,68,.28)', color:'#f87171' },
-    cel:     { bg:'rgba(168,85,247,.12)', border:'rgba(168,85,247,.28)', color:'#c084fc' },
-    dedeman: { bg:'rgba(34,197,94,.12)', border:'rgba(34,197,94,.28)', color:'#4ade80' },
-    pcgarage:{ bg:'rgba(124,58,237,.12)', border:'rgba(124,58,237,.28)', color:'#a78bfa' },
-    other:   { bg:'rgba(148,163,184,.08)', border:'rgba(148,163,184,.2)', color:'#94a3b8' }
-};
 
 function cautaComparare() {
     var btn = document.getElementById('btn-compara');
     var loading = document.getElementById('comparare-loading');
     var rez = document.getElementById('comparare-rezultate');
-    var statsBar = document.getElementById('compara-stats');
     btn.disabled = true;
-    loading.style.display = 'flex';
+    loading.style.display = 'block';
     rez.style.display = 'none';
-    statsBar.style.display = 'none';
 
     fetch('/api/compara?nume=' + encodeURIComponent({{ produs['nume']|tojson }}))
         .then(function(r) { return r.json(); })
         .then(function(data) {
             loading.style.display = 'none';
-            btn.disabled = false;
             var produse = data.produse || [];
             if (!produse.length) {
-                rez.innerHTML = '<p style="color:#94a3b8;padding:1.5rem;">Niciun rezultat găsit pe alte magazine.</p>';
-                rez.style.display = 'block';
-                return;
+                rez.innerHTML = '<p style="color:#94a3b8;">Niciun rezultat găsit pe alte magazine.</p>';
+            } else {
+                var rows = produse.map(function(p) {
+                    var c = _storeColor(p.sursa);
+                    return '<tr>' +
+                        '<td><span style="background:' + c + ';color:#fff;padding:2px 9px;border-radius:4px;font-size:0.8rem;font-weight:600;">' + (p.sursa || '') + '</span></td>' +
+                        '<td style="font-weight:700;padding:0 1rem;">' + (p.pret ? p.pret.toFixed(2) + ' Lei' : '—') + '</td>' +
+                        '<td><a href="' + p.link + '" target="_blank" rel="noopener" style="padding:0.3rem 0.9rem;background:' + c + ';color:#fff;border-radius:6px;font-size:0.82rem;font-weight:600;text-decoration:none;white-space:nowrap;">Cumpără</a></td>' +
+                        '</tr>';
+                }).join('');
+                rez.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.9rem;">' +
+                    '<thead><tr style="color:#94a3b8;border-bottom:1px solid rgba(255,255,255,0.08);">' +
+                    '<th style="text-align:left;padding:0.4rem 0;">Magazin</th>' +
+                    '<th style="text-align:left;padding:0.4rem 1rem;">Preț</th>' +
+                    '<th></th></tr></thead>' +
+                    '<tbody>' + rows + '</tbody></table>';
             }
-
-            var prices = produse.filter(function(p){ return p.pret; }).map(function(p){ return p.pret; });
-            var minP = Math.min.apply(null, prices);
-            var maxP = Math.max.apply(null, prices);
-            var avgP = prices.reduce(function(s,v){ return s+v; }, 0) / prices.length;
-            var fmt = function(n){ return n.toLocaleString('ro-RO',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' Lei'; };
-
-            document.getElementById('cs-min').textContent = fmt(minP);
-            document.getElementById('cs-avg').textContent = fmt(avgP);
-            document.getElementById('cs-max').textContent = fmt(maxP);
-            document.getElementById('cs-cnt').textContent = produse.length + ' oferte';
-            statsBar.style.display = 'grid';
-
-            var head = '<div class="cth-ref"><span>Magazin</span><span>Produs</span><span style="text-align:right">Preț</span><span style="text-align:right">Acțiune</span></div>';
-            var rows = produse.map(function(p, i) {
-                var isBest = p.pret && p.pret === minP;
-                var sk = _storeKey(p.sursa);
-                var st = STORE_STYLES[sk] || STORE_STYLES.other;
-                var badgeStyle = 'background:' + st.bg + ';border-color:' + st.border + ';color:' + st.color + ';';
-                var priceHtml = p.pret ? '<span style="font-size:.95rem;font-weight:800;color:' + (isBest?'#22c55e':'#e2e8f0') + '">' + fmt(p.pret) + (isBest?' <span style="font-size:.6rem;background:#22c55e;color:#000;border-radius:4px;padding:1px 5px;font-weight:800;vertical-align:middle;">BEST</span>':'') + '</span>' : '<span style="color:#4a5568">—</span>';
-                var buyBtn = p.link ? '<a href="' + p.link + '" target="_blank" rel="noopener" style="display:inline-block;padding:.42rem .9rem;border-radius:7px;font-size:.75rem;font-weight:700;text-decoration:none;background:' + (isBest?'#22c55e':'#f0a500') + ';color:' + (isBest?'#000':'#0f1117') + ';white-space:nowrap;transition:opacity .15s;" onmouseover="this.style.opacity=\'.82\'" onmouseout="this.style.opacity=\'1\'">Cumpără</a>' : '<span style="color:#4a5568;font-size:.75rem;">Indisponibil</span>';
-                var title = p.nume ? p.nume.substring(0, 55) + (p.nume.length > 55 ? '…' : '') : (p.sursa || '');
-                return '<div class="crow-ref' + (isBest?' best-row':'') + '" style="animation:rowIn .3s ease ' + (i*0.04) + 's both;">' +
-                    '<div><span class="store-badge" style="' + badgeStyle + '">' + (p.sursa || '') + '</span></div>' +
-                    '<div style="font-size:.79rem;color:#94a3b8;line-height:1.35;padding-right:.8rem;">' + title + '</div>' +
-                    '<div style="text-align:right">' + priceHtml + '</div>' +
-                    '<div style="text-align:right">' + buyBtn + '</div>' +
-                    '</div>';
-            }).join('');
-            rez.innerHTML = head + rows;
             rez.style.display = 'block';
+            btn.disabled = false;
         })
         .catch(function() {
             loading.style.display = 'none';
-            document.getElementById('comparare-rezultate').innerHTML = '<p style="color:#f87171;padding:1.5rem;">Eroare la căutare. Încearcă din nou.</p>';
-            document.getElementById('comparare-rezultate').style.display = 'block';
+            rez.innerHTML = '<p style="color:#e63946;">Eroare la căutare. Încearcă din nou.</p>';
+            rez.style.display = 'block';
             btn.disabled = false;
         });
 }
