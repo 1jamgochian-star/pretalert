@@ -142,52 +142,22 @@ function toggleAlerta() {
     els.forEach(function (el) { el.classList.add('reveal-ready'); obs.observe(el); });
 })();
 
-/* ── 7. Floating particles in .hero ─────────────────────── */
+/* ── 7. CSS particles ────────────────────────────────────── */
 (function initParticles() {
-    var hero = document.querySelector('.hero');
-    if (!hero || !window.requestAnimationFrame) return;
-    var canvas = document.createElement('canvas');
-    canvas.className = 'particles-canvas';
-    canvas.setAttribute('aria-hidden', 'true');
-    canvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;';
-    hero.insertBefore(canvas, hero.firstChild);
-    var ctx2d = canvas.getContext('2d');
-    var W, H, pts = [];
-    var N = 28;
-    function resize() {
-        W = canvas.width  = hero.offsetWidth;
-        H = canvas.height = hero.offsetHeight;
+    var container = document.getElementById('particles');
+    if (!container) return;
+    for (var i = 0; i < 22; i++) {
+        var p = document.createElement('div');
+        p.className = 'particle';
+        p.style.left = (Math.random() * 100) + 'vw';
+        p.style.bottom = (Math.random() * 30) + 'vh';
+        p.style.setProperty('--dx', ((Math.random() - .5) * 80) + 'px');
+        p.style.animationDelay = (Math.random() * 8) + 's';
+        p.style.animationDuration = (4 + Math.random() * 6) + 's';
+        var sz = (Math.random() * 2 + 2) + 'px';
+        p.style.width = p.style.height = sz;
+        container.appendChild(p);
     }
-    resize();
-    window.addEventListener('resize', resize, { passive: true });
-    for (var i = 0; i < N; i++) {
-        pts.push({
-            x:  Math.random() * (W || 800),
-            y:  Math.random() * (H || 300),
-            r:  Math.random() * 1.3 + 0.4,
-            dx: (Math.random() - .5) * .22,
-            dy: -(Math.random() * .38 + .08),
-            a:  Math.random() * .28 + .07
-        });
-    }
-    function drawParticles() {
-        ctx2d.clearRect(0, 0, W, H);
-        pts.forEach(function (p) {
-            ctx2d.beginPath();
-            ctx2d.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx2d.fillStyle = 'rgba(240,165,0,' + p.a + ')';
-            ctx2d.fill();
-            p.x += p.dx; p.y += p.dy;
-            if (p.y < -5) { p.y = H + 5; p.x = Math.random() * W; }
-            if (p.x < -5) p.x = W + 5;
-            if (p.x > W + 5) p.x = -5;
-        });
-        if (!document.hidden) requestAnimationFrame(drawParticles);
-    }
-    document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) requestAnimationFrame(drawParticles);
-    });
-    requestAnimationFrame(drawParticles);
 })();
 
 /* ══════════════════════════════════════════════════════════ */
