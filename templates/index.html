@@ -1,428 +1,213 @@
-{% extends "layout.html" %}
-{% block title %}{% if query %}{{ query }} – Prețuri România | PretAlert.ro{% else %}PretAlert.ro – Monitorizare prețuri eMAG, Altex, Flanco{% endif %}{% endblock %}
-{% block meta_description %}{% if query %}Compară prețuri pentru „{{ query }}" de la eMAG, Altex, Flanco, Dedeman și alte magazine online din România.{% else %}Monitorizare prețuri în timp real pe eMAG, Altex, Flanco, Dedeman. Setează alerte gratuite și fii primul care știe când prețul scade.{% endif %}{% endblock %}
-{% block content %}
-<style>
-/* ── Hero ─────────────────────────────────────────────────────── */
-.hero            { text-align:center; padding:4.5rem 1rem 2.5rem; }
-.hero--compact   { padding:1.6rem 1rem 1.4rem; }
-.hero-eyebrow    { font-size:.75rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:#f0a500; margin-bottom:.9rem; }
-.hero-h1         { font-size:3rem; font-weight:900; line-height:1.15; color:#fff; margin-bottom:.7rem; }
-.hero-h1 span    { color:#f0a500; }
-.hero-sub        { color:#64748b; font-size:1.05rem; margin-bottom:2.5rem; }
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PretAlert.ro - Monitorizare Prețuri România</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{  --bg:#080b14;--bg2:#0d1120;--bg3:#111827;  --card:rgba(255,255,255,0.04);--card-border:rgba(255,255,255,0.08);  --orange:#f59e0b;--orange-dark:#d97706;--orange-light:#fcd34d;--orange-glow:rgba(245,158,11,0.25);  --white:#fff;--gray:#94a3b8;--muted:#475569;  --green:#10b981;--red:#ef4444;--blue:#3b82f6;--purple:#8b5cf6;}
+        html{scroll-behavior:smooth}
+        body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--white);overflow-x:hidden;min-height:100vh}
+        
+        /* MESH BG */
+        .mesh-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}.blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.1}.b1{width:700px;height:700px;background:radial-gradient(circle,#f59e0b,transparent);top:-200px;left:-200px;animation:b1 18s ease-in-out infinite}.b2{width:500px;height:500px;background:radial-gradient(circle,#8b5cf6,transparent);top:40%;right:-100px;animation:b2 22s ease-in-out infinite}.b3{width:400px;height:400px;background:radial-gradient(circle,#3b82f6,transparent);bottom:10%;left:30%;animation:b3 16s ease-in-out infinite}@keyframes b1{0%,100%{transform:translate(0,0)}50%{transform:translate(60px,80px)}}@keyframes b2{0%,100%{transform:translate(0,0)}50%{transform:translate(-80px,60px)}}@keyframes b3{0%,100%{transform:translate(0,0)}50%{transform:translate(50px,-70px)}}.grid-ov{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:60px 60px}
 
-/* ── Search bar ───────────────────────────────────────────────── */
-.search-wrap     { max-width:680px; margin:0 auto; }
-.search-row      { display:flex; border-radius:16px; overflow:hidden; box-shadow:0 0 0 2px #2d3148; transition:box-shadow .2s; }
-.search-row:focus-within { box-shadow:0 0 0 2.5px #f0a500; }
-.search-input    { flex:1; padding:1.05rem 1.4rem; border:none; font-size:1rem; outline:none; background:#1a1d2e; color:#e2e8f0; min-width:0; }
-.search-input::placeholder { color:#4a5568; }
-.search-btn      { padding:1.05rem 1.8rem; background:#f0a500; color:#0f1117; border:none; font-size:1rem; font-weight:800; cursor:pointer; white-space:nowrap; transition:background .15s; flex-shrink:0; }
-.search-btn:hover{ background:#d4920a; }
+        /* HEADER */
+        header{position:fixed;top:0;left:0;right:0;z-index:1000;padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between}.h-inner{position:absolute;inset:0;background:rgba(8,11,20,.75);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,.06)}.logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;position:relative;z-index:1;cursor:pointer}.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--orange),var(--orange-dark));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 15px var(--orange-glow)}.logo-text{font-size:1.2rem;font-weight:800;letter-spacing:-.5px}.logo-text span{color:var(--orange)}
+        nav{display:flex;align-items:center;gap:2rem;position:relative;z-index:1}nav a{color:var(--gray);text-decoration:none;font-size:.87rem;font-weight:500;transition:color .2s;cursor:pointer}nav a:hover,nav a.active{color:var(--white)}
+        .h-right{display:flex;align-items:center;gap:.7rem;position:relative;z-index:1}
+        .btn-ghost{padding:.42rem 1rem;background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--gray);border-radius:8px;font-size:.84rem;font-weight:500;cursor:pointer}
+        .btn-primary{padding:.42rem 1.1rem;background:linear-gradient(135deg,var(--orange),var(--orange-dark));border:none;color:#000;border-radius:8px;font-size:.84rem;font-weight:700;cursor:pointer;box-shadow:0 2px 12px var(--orange-glow)}
 
-/* ── Magazine toggles ─────────────────────────────────────────── */
-.mag-toggles     { display:flex; flex-wrap:wrap; gap:.4rem; justify-content:center; margin-top:.85rem; }
-.mag-toggle      { display:flex; align-items:center; gap:.35rem; padding:.3rem .8rem .3rem .55rem; border-radius:99px; border:1.5px solid var(--mc); color:#e2e8f0; font-size:.8rem; font-weight:600; cursor:pointer; user-select:none; transition:opacity .15s; }
-.mag-toggle:has(input:not(:checked)) { opacity:.32; }
-.mag-dot         { width:8px; height:8px; border-radius:50%; background:var(--mc); flex-shrink:0; }
-.mag-toggle input{ display:none; }
+        /* TICKER */
+        .ticker-wrap{position:relative;z-index:10;margin-top:64px;background:rgba(245,158,11,.05);border-bottom:1px solid rgba(245,158,11,.1);overflow:hidden;height:34px;display:flex;align-items:center}.ticker-label{flex-shrink:0;padding:0 1rem;background:var(--orange);color:#000;font-size:.68rem;font-weight:800;height:100%;display:flex;align-items:center}.ticker-track{display:flex;animation:ticker 35s linear infinite;white-space:nowrap}@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}.t-item{padding:0 2rem;font-size:.76rem;color:var(--gray)}
 
-/* ── Results toolbar ──────────────────────────────────────────── */
-.results-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.65rem; margin-bottom:.9rem; }
-.toolbar-title   { font-size:.92rem; color:#94a3b8; font-weight:500; }
-.toolbar-right   { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; }
-.ctrl-sep        { width:1px; height:18px; background:#2d3148; align-self:center; }
+        /* PAGE SYSTEM */
+        .page{display:none;animation:pageIn .4s ease forwards}.page.active{display:block}@keyframes pageIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        
+        /* LANDING STYLES */
+        .hero{text-align:center;padding:5rem 2rem}.hero h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;margin-bottom:1.5rem}.search-wrap{max-width:680px;margin:2rem auto}.search-box{display:flex;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:16px;overflow:hidden}.search-box input{flex:1;padding:1rem;background:transparent;border:none;color:#fff;outline:none}.search-btn{padding:0 1.5rem;background:var(--orange);border:none;font-weight:700;cursor:pointer}
+        .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem;padding:2rem;max-width:1200px;margin:0 auto}
+        .p-card{background:var(--bg2);border:1px solid var(--card-border);padding:1.2rem;border-radius:16px;transition:0.3s;cursor:pointer;backdrop-filter:blur(10px)}.p-card:hover{transform:translateY(-5px);border-color:var(--orange)}.p-img{height:150px;background:var(--bg3);display:flex;justify-content:center;align-items:center;font-size:3.5rem;border-radius:12px;margin-bottom:1rem}.p-price{color:var(--orange);font-weight:800;font-size:1.3rem}
 
-/* ── Store filter row ─────────────────────────────────────────── */
-.filtru-row      { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; margin-bottom:.9rem; }
-.filtru-lbl      { color:#64748b; font-size:.78rem; white-space:nowrap; }
+        /* DASHBOARD STYLES */
+        .dash-page{max-width:1100px;margin:0 auto;padding:4rem 2rem}.chart-card{background:var(--bg2);padding:2rem;border-radius:20px;border:1px solid var(--card-border);margin-top:2rem}
+        canvas{width:100% !important; height: 350px !important;}
+    </style>
+</head>
+<body>
 
-/* ── Scan / loading banner ────────────────────────────────────── */
-.scan-banner     { display:flex; align-items:center; gap:.65rem; padding:.65rem 1rem; background:#1a1d2e; border:1px solid #2d3148; border-radius:10px; margin-bottom:1rem; font-size:.85rem; color:#94a3b8; }
-.scan-dots       { display:flex; gap:4px; flex-shrink:0; }
-.scan-dots span  { width:6px; height:6px; border-radius:50%; background:#f0a500; animation:dotpulse 1.4s ease-in-out infinite; }
-.scan-dots span:nth-child(2){ animation-delay:.22s; }
-.scan-dots span:nth-child(3){ animation-delay:.44s; }
-@keyframes dotpulse{ 0%,80%,100%{transform:scale(.55);opacity:.35} 40%{transform:scale(1);opacity:1} }
+<div class="mesh-bg">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+</div>
+<div class="grid-ov"></div>
 
-/* ── Product cards ────────────────────────────────────────────── */
-.produse-grid    { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:1.1rem; }
-.card-produs     { background:#131929; border:1px solid rgba(255,255,255,.06); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; transition:transform .2s,border-color .2s,box-shadow .2s; position:relative; cursor:pointer; }
-.card-produs:hover { transform:translateY(-5px); border-color:rgba(240,165,0,.45); box-shadow:0 14px 44px rgba(0,0,0,.55); }
-.card-cover      { position:absolute; inset:0; z-index:1; }
-.card-store      { position:absolute; top:0; left:0; z-index:2; font-size:.68rem; font-weight:800; padding:3px 9px; border-radius:0 0 8px 0; color:#fff; letter-spacing:.04em; }
-.card-poza       { background:#fff; height:170px; display:flex; align-items:center; justify-content:center; padding:.7rem; flex-shrink:0; }
-.card-poza img   { max-height:100%; max-width:100%; object-fit:contain; }
-.no-img          { font-size:3.5rem; }
-.card-body       { padding:.85rem; display:flex; flex-direction:column; flex:1; }
-.card-title      { font-size:.81rem; color:#cbd5e1; line-height:1.45; margin-bottom:.5rem; flex:1; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-.card-pret       { font-size:1.35rem; font-weight:800; color:#f0a500; letter-spacing:-.02em; margin-bottom:.7rem; }
-.card-actions    { display:flex; gap:.4rem; position:relative; z-index:2; }
-.card-btn-info   { flex:1; text-align:center; padding:.4rem 0; border-radius:8px; border:1px solid #2d3148; color:#94a3b8; font-size:.76rem; font-weight:600; text-decoration:none; transition:border-color .15s,color .15s; }
-.card-btn-info:hover { border-color:#f0a500; color:#f0a500; }
-.card-btn-buy    { flex:1; text-align:center; padding:.4rem 0; border-radius:8px; color:#fff; font-size:.76rem; font-weight:700; text-decoration:none; transition:opacity .15s; }
-.card-btn-buy:hover  { opacity:.82; }
+<header>
+    <div class="h-inner"></div>
+    <div class="logo" onclick="showPage('landing')">
+        <div class="logo-icon">🔔</div>
+        <div class="logo-text">Pret<span>Alert</span><small>.ro</small></div>
+    </div>
+    <nav>
+        <a onclick="showPage('landing')" id="nav-landing" class="active">Acasă</a>
+        <a onclick="showPage('dashboard')" id="nav-dashboard">Dashboard</a>
+        <a href="#">Magazine</a>
+    </nav>
+    <div class="h-right">
+        <button class="btn-ghost" onclick="showPage('login')">Intră în cont</button>
+        <button class="btn-primary" onclick="showPage('login')">Înregistrare</button>
+    </div>
+</header>
 
-/* ── Skeleton cards ───────────────────────────────────────────── */
-.card-skel       { background:#131929; border:1px solid rgba(255,255,255,.05); border-radius:16px; overflow:hidden; }
-@keyframes shimmer{ 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-.skel            { background:linear-gradient(90deg,#1c2436 25%,#243046 50%,#1c2436 75%); background-size:200% 100%; animation:shimmer 1.6s infinite; border-radius:6px; }
-.skel-img        { height:170px; border-radius:0; }
-.skel-body       { padding:.85rem; }
-.skel-ln         { height:10px; margin-bottom:9px; }
+<div class="ticker-wrap">
+    <div class="ticker-label">LIVE DEALS</div>
+    <div class="ticker-track" id="tickerTrack"></div>
+</div>
 
-/* ── Empty state ──────────────────────────────────────────────── */
-.empty-wrap      { grid-column:1/-1; text-align:center; padding:4rem 1rem; }
-.empty-icon      { font-size:3.5rem; margin-bottom:.9rem; }
-.empty-wrap h3   { color:#e2e8f0; font-size:1.15rem; margin-bottom:.45rem; }
-.empty-wrap p    { color:#64748b; font-size:.9rem; margin-bottom:1.4rem; }
-.sugestii        { display:flex; gap:.5rem; flex-wrap:wrap; justify-content:center; }
-.sugestii a      { padding:.38rem 1rem; background:#1a1d2e; border:1px solid #2d3148; border-radius:99px; color:#94a3b8; font-size:.84rem; text-decoration:none; transition:border-color .15s,color .15s; }
-.sugestii a:hover{ border-color:#f0a500; color:#f0a500; }
-
-/* ── Pagination ───────────────────────────────────────────────── */
-.paginare-wrap   { display:flex; align-items:center; justify-content:center; gap:.75rem; margin-top:2rem; }
-
-/* ── Feature cards (home) ─────────────────────────────────────── */
-.features-grid   { display:grid; grid-template-columns:repeat(3,1fr); gap:1.1rem; margin-top:3rem; }
-.feature-card    { background:#131929; border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:2rem 1.5rem; text-align:center; text-decoration:none; color:inherit; transition:border-color .2s,transform .2s; }
-.feature-card:hover{ border-color:rgba(240,165,0,.4); transform:translateY(-3px); }
-.feature-card .fc-icon{ font-size:2.2rem; margin-bottom:.9rem; }
-.feature-card h3 { color:#fff; font-size:1rem; margin-bottom:.4rem; }
-.feature-card p  { color:#64748b; font-size:.85rem; line-height:1.5; }
-
-/* ── Responsive ───────────────────────────────────────────────── */
-@media(max-width:768px){
-  .hero           { padding:2rem 1rem 1.5rem; }
-  .hero--compact  { padding:1.1rem 1rem .9rem; }
-  .hero-h1        { font-size:1.9rem; }
-  .search-btn     { padding:1rem .9rem; font-size:.88rem; }
-  .produse-grid   { grid-template-columns:repeat(2,1fr); gap:.7rem; }
-  .card-poza      { height:130px; }
-  .results-toolbar{ flex-direction:column; align-items:flex-start; }
-  .features-grid  { grid-template-columns:1fr; }
-}
-@media(max-width:420px){
-  .produse-grid   { grid-template-columns:1fr; }
-  .hero-h1        { font-size:1.5rem; }
-  .search-btn     { padding:1rem .7rem; }
-}
-</style>
-
-<!-- ── HERO ─────────────────────────────────────────────────────── -->
-<section class="hero {% if query %}hero--compact{% endif %}">
-    {% if not query %}
-    <div class="hero-eyebrow">🇷🇴 Comparator de prețuri</div>
-    <h1 class="hero-h1">Găsește cel mai bun <span>preț</span><br>din România</h1>
-    <p class="hero-sub">Compară live pe eMAG, Altex, Flanco și altele · Alerte gratuite când prețul scade</p>
-    {% endif %}
-    <div class="search-wrap">
-        <form action="/" method="GET">
-            <div class="search-row">
-                <input type="text" name="q" value="{{ query }}"
-                       placeholder="Caută un produs... ex: iPhone 15, Samsung TV 55&quot;"
-                       class="search-input" autofocus autocomplete="off">
-                <button type="submit" class="search-btn">🔍 Caută</button>
+<main>
+    <div class="page active" id="page-landing">
+        <section class="hero">
+            <h1>Monitorizăm prețurile,<br><span style="color:var(--orange)">Tu economisești bani.</span></h1>
+            <div class="search-wrap">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Ce produs cauți astăzi?" onkeyup="handleSearch()">
+                    <button class="search-btn">Caută</button>
+                </div>
             </div>
-        </form>
-        <div class="mag-toggles">
-            <label class="mag-toggle" style="--mc:#ff6900"><input type="checkbox" class="mag-checkbox" value="eMAG" checked><span class="mag-dot"></span>eMAG</label>
-            <label class="mag-toggle" style="--mc:#e63946"><input type="checkbox" class="mag-checkbox" value="Altex" checked><span class="mag-dot"></span>Altex</label>
-            <label class="mag-toggle" style="--mc:#0057b7"><input type="checkbox" class="mag-checkbox" value="Flanco" checked><span class="mag-dot"></span>Flanco</label>
-            <label class="mag-toggle" style="--mc:#2196F3"><input type="checkbox" class="mag-checkbox" value="CEL" checked><span class="mag-dot"></span>CEL</label>
-            <label class="mag-toggle" style="--mc:#7c3aed"><input type="checkbox" class="mag-checkbox" value="PC Garage" checked><span class="mag-dot"></span>PC Garage</label>
-            <label class="mag-toggle" style="--mc:#00843D"><input type="checkbox" class="mag-checkbox" value="Dedeman" checked><span class="mag-dot"></span>Dedeman</label>
+        </section>
+        <div class="prod-grid" id="productsGrid">
+            </div>
+    </div>
+
+    <div class="page" id="page-dashboard">
+        <div class="dash-page">
+            <h1 style="font-size: 2rem;">Panoul tău de control</h1>
+            <p style="color: var(--gray);">Vezi istoricul de preț pentru produsele tale favorite.</p>
+            
+            <div class="chart-card">
+                <h3 style="margin-bottom: 1rem;">Evoluție Economii (2026)</h3>
+                <canvas id="savingsChart"></canvas>
+            </div>
         </div>
     </div>
-</section>
 
-{% if query %}
-<!-- ── TOOLBAR ───────────────────────────────────────────────────── -->
-<div class="results-toolbar">
-    <div class="toolbar-title" id="rezultate-titlu">
-        {% if produse %}{{ produse|length }} rezultate pentru „{{ query }}"
-        {% else %}Se caută „{{ query }}"...{% endif %}
-    </div>
-    <div class="toolbar-right" id="toolbar-controls"{% if not produse %} style="display:none"{% endif %}>
-        <div class="sortare-bar" id="sortare-bar">
-            <button class="sort-btn active" data-sort="relevanta">Relevanță</button>
-            <button class="sort-btn" data-sort="pret-asc">Preț ↑</button>
-            <button class="sort-btn" data-sort="pret-desc">Preț ↓</button>
-            <button class="sort-btn" data-sort="nume-az">A–Z</button>
-        </div>
-        <div class="ctrl-sep"></div>
-        <div class="sortare-bar" id="per-pagina-bar">
-            <button class="sort-btn" data-pp="20">20</button>
-            <button class="sort-btn active" data-pp="50">50</button>
-            <button class="sort-btn" data-pp="100">100</button>
+    <div class="page" id="page-login">
+        <div style="text-align:center; padding: 10rem 2rem;">
+            <h2>Bine ai revenit!</h2>
+            <p style="color:var(--gray); margin: 1rem 0;">Introdu datele pentru a accesa alertele tale.</p>
+            <button class="btn-primary" onclick="showPage('dashboard')">Logare de test</button>
         </div>
     </div>
-</div>
-
-<!-- ── STORE FILTER PILLS ─────────────────────────────────────────── -->
-<div class="filtru-row" id="filtru-magazin" style="display:none">
-    <span class="filtru-lbl">Magazin:</span>
-    <div id="filtru-pills" style="display:flex;flex-wrap:wrap;gap:.35rem;"></div>
-</div>
-
-<!-- ── SCRAPING BANNER ────────────────────────────────────────────── -->
-<div id="scraping-banner" class="scan-banner" style="display:none">
-    <div class="scan-dots"><span></span><span></span><span></span></div>
-    <span>Se caută pe toate magazinele...</span>
-</div>
-
-<!-- ── GRID ──────────────────────────────────────────────────────── -->
-<div class="produse-grid" id="produse-grid">
-{% if not produse %}
-    {% for i in range(12) %}
-    <div class="card-skel">
-        <div class="skel skel-img"></div>
-        <div class="skel-body">
-            <div class="skel skel-ln" style="width:92%"></div>
-            <div class="skel skel-ln" style="width:76%"></div>
-            <div class="skel skel-ln" style="width:58%"></div>
-            <div class="skel skel-ln" style="width:45%;height:16px;margin-top:6px;"></div>
-        </div>
-    </div>
-    {% endfor %}
-{% endif %}
-</div>
-
-<!-- ── PAGINATION ─────────────────────────────────────────────────── -->
-<div id="paginare" class="paginare-wrap" style="display:none">
-    <button class="sort-btn" id="btn-prev">← Anterior</button>
-    <span id="paginare-info" style="color:#64748b;font-size:.88rem;white-space:nowrap;"></span>
-    <button class="sort-btn" id="btn-next">Următor →</button>
-</div>
+</main>
 
 <script>
-(function() {
-    var query = "{{ query|e }}";
-    var grid = document.getElementById('produse-grid');
-    var titlu = document.getElementById('rezultate-titlu');
-    var toolbarControls = document.getElementById('toolbar-controls');
-    var paginareDiv = document.getElementById('paginare');
-    var paginareInfo = document.getElementById('paginare-info');
-    var btnPrev = document.getElementById('btn-prev');
-    var btnNext = document.getElementById('btn-next');
-    var scrapingBanner = document.getElementById('scraping-banner');
-    var filtruBar = document.getElementById('filtru-magazin');
-    var filtruPills = document.getElementById('filtru-pills');
+    // 1. DATE SIMULATE
+    const products = [
+        {id: 1, n:'Samsung Galaxy Watch Ultra', p:2156, op:2799, e:'⌚'},
+        {id: 2, n:'iPhone 15 Pro Max 256GB', p:5299, op:5999, e:'📱'},
+        {id: 3, n:'PlayStation 5 Slim Console', p:2099, op:2299, e:'🎮'},
+        {id: 4, n:'Sony WH-1000XM5 Headphones', p:1149, op:1399, e:'🎧'},
+        {id: 5, n:'MacBook Air M3 13-inch', p:6799, op:7499, e:'💻'},
+        {id: 6, n:'Dyson V15 Detect Vacuum', p:2799, op:3299, e:'🌀'},
+        {id: 7, n:'iPad Pro M2 11-inch', p:4100, op:4500, e:'平板'},
+        {id: 8, n:'Nintendo Switch OLED', p:1550, op:1800, e:'🕹️'}
+    ];
 
-    var toateProdusele = {{ produse | tojson }};
-    var vazuteIds = new Set(toateProdusele.map(function(p) { return p.id; }));
-    var sortCurent = 'relevanta';
-    var perPagina = 50;
-    var paginaCurenta = 1;
-    var intervalId = null;
-    var filtruSursa = 'toate';
+    // 2. NAVIGARE INTRE PAGINI
+    function showPage(pageId) {
+        // Ascundem toate paginile
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        // Afisam pagina ceruta
+        document.getElementById('page-' + pageId).classList.add('active');
+        
+        // Update Meniu Navigare
+        document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+        const activeNav = document.getElementById('nav-' + pageId);
+        if(activeNav) activeNav.classList.add('active');
 
-    var STORE_COLORS = {
-        'emag':'#ff6900','dedeman':'#00843D','altex':'#e63946',
-        'flanco':'#0057b7','cel':'#2196F3','pc garage':'#7c3aed'
+        // Daca e dashboard, pornim graficul
+        if(pageId === 'dashboard') {
+            setTimeout(initDashboardChart, 100); 
+        }
+        window.scrollTo(0,0);
+    }
+
+    // 3. CAUTARE
+    function handleSearch() {
+        const val = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = products.filter(p => p.n.toLowerCase().includes(val));
+        renderProducts(filtered);
+    }
+
+    // 4. RENDERING PRODUSE
+    function renderProducts(data) {
+        const grid = document.getElementById('productsGrid');
+        if(!grid) return;
+        
+        grid.innerHTML = data.map(p => `
+            <div class="p-card">
+                <div class="p-img">${p.e}</div>
+                <p style="font-size:0.8rem; color:var(--muted)">Electronice</p>
+                <h3 style="font-size:0.95rem; margin:0.5rem 0">${p.n}</h3>
+                <div style="display:flex; align-items:baseline; gap:0.5rem">
+                    <span class="p-price">${p.p} Lei</span>
+                    <span style="text-decoration:line-through; font-size:0.75rem; color:var(--muted)">${p.op} Lei</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 5. TICKER (BANDA RULANTA)
+    function initTicker() {
+        const track = document.getElementById('tickerTrack');
+        const items = products.map(p => `<span class="t-item">${p.n}: <b style="color:var(--orange)">${p.p} Lei</b></span>`).join('');
+        track.innerHTML = items + items; // Dublam pentru scroll infinit
+    }
+
+    // 6. GRAFIC DASHBOARD
+    let myChart = null;
+    function initDashboardChart() {
+        const ctx = document.getElementById('savingsChart');
+        if(!ctx) return;
+        
+        if(myChart) myChart.destroy(); // Distrugem chart-ul vechi sa nu dea eroare
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Ian', 'Feb', 'Mar', 'Apr', 'Mai', 'Iun'],
+                datasets: [{
+                    label: 'Economii Totale',
+                    data: [120, 450, 380, 900, 1200, 1540],
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    // INITIALIZARE LA INCARCARE
+    window.onload = () => {
+        renderProducts(products);
+        initTicker();
     };
-    function storeColor(sursa) {
-        var s = (sursa || '').toLowerCase();
-        for (var k in STORE_COLORS) { if (s.indexOf(k) !== -1) return STORE_COLORS[k]; }
-        return '#475569';
-    }
-
-    function cardHtml(p) {
-        var sursa = p.sursa || 'eMAG';
-        var color = storeColor(sursa);
-        var pret = p.pret_curent
-            ? Number(p.pret_curent).toLocaleString('ro-RO', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' Lei'
-            : '';
-        var titluProdus = p.nume ? (p.nume.length > 72 ? p.nume.substring(0, 72) + '…' : p.nume) : '';
-        var imgHtml = p.poza
-            ? '<img src="' + p.poza + '" alt="" loading="lazy">'
-            : '<div class="no-img">📦</div>';
-        var buyBtn = p.link
-            ? '<a href="' + p.link + '" target="_blank" rel="noopener" class="card-btn-buy" style="background:' + color + '" onclick="event.stopPropagation()">Cumpără</a>'
-            : '';
-        return '<div class="card-produs">' +
-            '<a href="/produs/' + p.id + '" class="card-cover" aria-label="' + titluProdus.replace(/"/g, '') + '"></a>' +
-            '<div class="card-store" style="background:' + color + '">' + sursa + '</div>' +
-            '<div class="card-poza">' + imgHtml + '</div>' +
-            '<div class="card-body">' +
-            '<div class="card-title">' + titluProdus + '</div>' +
-            '<div class="card-pret">' + pret + '</div>' +
-            '<div class="card-actions">' +
-            '<a href="/produs/' + p.id + '" class="card-btn-info" onclick="event.stopPropagation()">Detalii</a>' +
-            buyBtn +
-            '</div></div></div>';
-    }
-
-    function sorteaza(lista) {
-        var s = lista.slice();
-        if (sortCurent === 'pret-asc')  s.sort(function(a,b){ return (a.pret_curent||Infinity)-(b.pret_curent||Infinity); });
-        else if (sortCurent === 'pret-desc') s.sort(function(a,b){ return (b.pret_curent||0)-(a.pret_curent||0); });
-        else if (sortCurent === 'nume-az')   s.sort(function(a,b){ return a.nume.localeCompare(b.nume,'ro'); });
-        return s;
-    }
-
-    function getMagazineActive() {
-        var checked = [];
-        document.querySelectorAll('.mag-checkbox:checked').forEach(function(cb){ checked.push(cb.value); });
-        return checked;
-    }
-
-    function produseVizibile() {
-        var activeMag = getMagazineActive();
-        var list = activeMag.length > 0
-            ? toateProdusele.filter(function(p){ return activeMag.indexOf(p.sursa) !== -1; })
-            : toateProdusele;
-        if (filtruSursa !== 'toate') list = list.filter(function(p){ return p.sursa === filtruSursa; });
-        return list;
-    }
-
-    function actualizeazaFiltru() {
-        var surse = [];
-        toateProdusele.forEach(function(p){ if (p.sursa && surse.indexOf(p.sursa) === -1) surse.push(p.sursa); });
-        if (surse.length < 2) { filtruBar.style.display = 'none'; return; }
-        filtruBar.style.display = 'flex';
-        var pills = [{key:'toate', label:'Toate', n:toateProdusele.length}];
-        surse.forEach(function(s){ pills.push({key:s, label:s, n:toateProdusele.filter(function(p){ return p.sursa===s; }).length}); });
-        filtruPills.innerHTML = pills.map(function(pill){
-            var active = filtruSursa === pill.key;
-            return '<button class="sort-btn' + (active?' active':'') + '" data-sursa="' + pill.key + '" style="font-size:.77rem;padding:.22rem .65rem;">' +
-                pill.label + ' <span style="opacity:.55;">(' + pill.n + ')</span></button>';
-        }).join('');
-        filtruPills.querySelectorAll('button').forEach(function(btn){
-            btn.addEventListener('click', function(){ filtruSursa=btn.dataset.sursa; paginaCurenta=1; actualizeazaFiltru(); reRender(); });
-        });
-    }
-
-    function emptyHtml(msg, sub) {
-        return '<div class="empty-wrap"><div class="empty-icon">🔍</div><h3>' + msg + '</h3><p>' + sub + '</p>' +
-            '<div class="sugestii"><a href="/?q=laptop">laptop</a><a href="/?q=telefon">telefon</a>' +
-            '<a href="/?q=televizor">televizor</a><a href="/?q=frigider">frigider</a><a href="/?q=tableta">tabletă</a></div></div>';
-    }
-
-    function reRender() {
-        var sorted = sorteaza(produseVizibile());
-        var totalPagini = Math.max(1, Math.ceil(sorted.length / perPagina));
-        if (paginaCurenta > totalPagini) paginaCurenta = totalPagini;
-        var start = (paginaCurenta - 1) * perPagina;
-        var page = sorted.slice(start, start + perPagina);
-
-        if (page.length) {
-            grid.innerHTML = page.map(cardHtml).join('');
-        } else if (toateProdusele.length > 0) {
-            grid.innerHTML = emptyHtml('Niciun produs pentru filtrele selectate', 'Încearcă alte magazine sau schimbă sortarea.');
-        }
-        /* else: no products yet (scraping), leave skeleton intact */
-
-        if (totalPagini > 1) {
-            paginareDiv.style.display = 'flex';
-            paginareInfo.textContent = 'Pagina ' + paginaCurenta + ' din ' + totalPagini;
-            btnPrev.disabled = paginaCurenta === 1;
-            btnNext.disabled = paginaCurenta === totalPagini;
-        } else {
-            paginareDiv.style.display = 'none';
-        }
-    }
-
-    function stopPolling() {
-        clearInterval(intervalId); intervalId = null;
-        scrapingBanner.style.display = 'none';
-    }
-
-    if (toateProdusele.length > 0) { actualizeazaFiltru(); reRender(); }
-
-    document.querySelectorAll('#sortare-bar .sort-btn').forEach(function(btn){
-        btn.addEventListener('click', function(){
-            document.querySelectorAll('#sortare-bar .sort-btn').forEach(function(b){ b.classList.remove('active'); });
-            btn.classList.add('active');
-            sortCurent = btn.dataset.sort;
-            paginaCurenta = 1;
-            reRender();
-        });
-    });
-
-    document.querySelectorAll('#per-pagina-bar .sort-btn').forEach(function(btn){
-        btn.addEventListener('click', function(){
-            document.querySelectorAll('#per-pagina-bar .sort-btn').forEach(function(b){ b.classList.remove('active'); });
-            btn.classList.add('active');
-            perPagina = parseInt(btn.dataset.pp);
-            paginaCurenta = 1;
-            reRender();
-        });
-    });
-
-    btnPrev.addEventListener('click', function(){ if(paginaCurenta>1){ paginaCurenta--; reRender(); window.scrollTo(0,0); } });
-    btnNext.addEventListener('click', function(){ paginaCurenta++; reRender(); window.scrollTo(0,0); });
-
-    document.querySelectorAll('.mag-checkbox').forEach(function(cb){
-        cb.addEventListener('change', function(){ paginaCurenta=1; filtruSursa='toate'; actualizeazaFiltru(); reRender(); });
-    });
-
-    function poll() {
-        var magParams = getMagazineActive().map(function(m){ return 'mag='+encodeURIComponent(m); }).join('&');
-        var apiUrl = '/api/search?q=' + encodeURIComponent(query) + (magParams ? '&' + magParams : '');
-        fetch(apiUrl)
-            .then(function(r){ return r.json(); })
-            .then(function(data){
-                var produse = data.produse || [];
-                var status = data.status;
-
-                /* remove skeleton cards on first real response */
-                grid.querySelectorAll('.card-skel').forEach(function(el){ el.remove(); });
-
-                var hadNew = false;
-                produse.forEach(function(p){
-                    if (!vazuteIds.has(p.id)){ vazuteIds.add(p.id); toateProdusele.push(p); hadNew = true; }
-                });
-
-                if (hadNew){ actualizeazaFiltru(); reRender(); }
-
-                var total = toateProdusele.length;
-                toolbarControls.style.display = total > 0 ? '' : 'none';
-
-                if (status === 'scraping') {
-                    scrapingBanner.style.display = 'flex';
-                    titlu.textContent = total + ' produse găsite pentru „' + query + '"';
-                } else {
-                    actualizeazaFiltru();
-                    if (total === 0) {
-                        grid.innerHTML = emptyHtml(
-                            'Niciun produs găsit pentru „' + query + '"',
-                            'Încearcă termeni mai generali sau verifică că magazinele sunt bifate.'
-                        );
-                        titlu.textContent = 'Niciun rezultat pentru „' + query + '"';
-                    } else {
-                        titlu.textContent = total + ' produse găsite pentru „' + query + '"';
-                        reRender();
-                    }
-                    stopPolling();
-                }
-            })
-            .catch(function(){});
-    }
-
-    poll();
-    intervalId = setInterval(poll, 3000);
-})();
 </script>
 
-{% else %}
-<!-- ── HOME — feature cards ──────────────────────────────────────── -->
-<div class="features-grid">
-    <a href="/?q=laptop" class="feature-card">
-        <div class="fc-icon">📊</div>
-        <h3>Istoric prețuri</h3>
-        <p>Urmărește evoluția prețului și află când e cel mai bun moment să cumperi</p>
-    </a>
-    <a href="/profil" class="feature-card">
-        <div class="fc-icon">🔔</div>
-        <h3>Alerte email</h3>
-        <p>Primești notificare instant când prețul scade sub pragul ales de tine</p>
-    </a>
-    <a href="/?q=telefon" class="feature-card">
-        <div class="fc-icon">🛒</div>
-        <h3>Comparare magazine</h3>
-        <p>Cel mai mic preț pe eMAG, Altex, Flanco, CEL și PC Garage simultan</p>
-    </a>
-</div>
-{% endif %}
-{% endblock %}
+</body>
+</html>
