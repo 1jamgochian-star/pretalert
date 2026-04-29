@@ -4,7 +4,7 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from whitenoise import WhiteNoise
-from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email, sterge_cont_complet, get_all_produse_ids
+from database import init_db, get_produs, get_istoric, salveaza_alerta, get_alerte_user, sterge_alerta, schimba_parola, schimba_username, urmareste_produs, sterge_urmarire, get_produse_urmarite, este_urmarit, salveaza_vizita, get_istoric_vizite, cauta_produse_db, salveaza_produs, get_user_by_email, sterge_cont_complet, get_all_produse_ids, get_ticker_produse
 from scraper import cauta_emag, cauta_toate, scrape_produs, salveaza_rezultate
 from scheduler import start_scheduler
 from auth import auth, bcrypt, login_manager, oauth
@@ -170,6 +170,12 @@ def alerta():
 @app.route('/23e71b655a3c0a565d2868686180808d')
 def profitshare_validation():
     return '', 200
+
+@app.route('/api/ticker')
+def api_ticker():
+    produse = get_ticker_produse()
+    return jsonify({"produse": produse})
+
 
 @app.route('/api/search')
 def api_search():

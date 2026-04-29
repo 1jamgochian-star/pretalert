@@ -235,6 +235,20 @@ def get_user_by_email(email):
     conn.close()
     return row_to_dict(user)
 
+def get_ticker_produse():
+    conn = get_db()
+    c = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    c.execute("""
+        SELECT id, nume, pret_curent, sursa
+        FROM produse
+        WHERE pret_curent IS NOT NULL AND pret_curent > 0
+        ORDER BY data_adaugare DESC
+        LIMIT 20
+    """)
+    produse = c.fetchall()
+    conn.close()
+    return rows_to_list(produse)
+
 def get_all_produse_ids():
     conn = get_db()
     c = conn.cursor()

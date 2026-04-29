@@ -6,56 +6,86 @@
     <meta name='profitshareid' content='23e71b655a3c0a565d2868686180808d' />
     <title>{% block title %}PretAlert.ro{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}Monitorizare prețuri în timp real pe eMAG, Altex, Flanco, Dedeman și alte magazine din România. Setează alerte gratuite și economisești.{% endblock %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
-    <header>
+
+<div class="mesh-bg">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+</div>
+<div class="grid-ov"></div>
+
+<header>
+    <div class="h-inner"></div>
     <a href="/" class="logo">
-        <img src="/static/logo.png" alt="PretAlert.ro" style="height: 120px; width: auto; margin-top: -35px; margin-bottom: -35px;">
+        <div class="logo-icon">🔔</div>
+        <div class="logo-text">Pret<span>Alert</span><small>.ro</small></div>
     </a>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:0.8rem;">
+    <nav>
+        <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Acasă</a>
         {% if current_user.is_authenticated %}
-            <a href="/profil" style="color:#aaa;font-size:0.9rem;text-decoration:none;">👤 {{ current_user.username }}</a>
-            <a href="/logout" style="padding:0.4rem 1rem;background:#ff4444;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Ieși</a>
+        <a href="/profil" {% if request.path == '/profil' %}class="active"{% endif %}>Dashboard</a>
+        {% endif %}
+        <a href="/despre" {% if request.path == '/despre' %}class="active"{% endif %}>Despre</a>
+        <a href="/contact" {% if request.path == '/contact' %}class="active"{% endif %}>Contact</a>
+    </nav>
+    <div class="h-right">
+        {% if current_user.is_authenticated %}
+            <a href="/profil" class="btn-ghost">👤 {{ current_user.username }}</a>
+            <a href="/logout" class="btn-primary">Ieși</a>
         {% else %}
-            <a href="/login" style="padding:0.4rem 1rem;background:#2d3148;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Login</a>
-            <a href="/register" style="padding:0.4rem 1rem;background:#6c63ff;color:#fff;border-radius:8px;text-decoration:none;font-size:0.9rem;">Cont nou</a>
+            <a href="/login" class="btn-ghost">Intră în cont</a>
+            <a href="/register" class="btn-primary">Înregistrare</a>
         {% endif %}
     </div>
 </header>
-    <main>
-        {% block content %}{% endblock %}
-        
-    </main>
-    <footer>
-        <p>© 2026 PretAlert.ro — Monitorizare prețuri România</p>
-        <p style="margin-top:0.4rem;">
-            <a href="/despre" style="color:#888;text-decoration:none;">Despre</a>
-            &nbsp;·&nbsp;
-            <a href="/contact" style="color:#888;text-decoration:none;">Contact</a>
-            &nbsp;·&nbsp;
-            <a href="/privacy" style="color:#888;text-decoration:none;">Confidențialitate</a>
-            &nbsp;·&nbsp;
-            <a href="/terms" style="color:#888;text-decoration:none;">Termeni</a>
-            &nbsp;·&nbsp;
-            <a href="https://anpc.ro" target="_blank" rel="noopener" style="color:#888;text-decoration:none;">ANPC</a>
-        </p>
-        <p style="margin-top:0.4rem;font-size:0.78rem;color:#475569;">
-            Site-ul poate conține linkuri de afiliere. Prețurile sunt informative — verifică magazinul înainte de cumpărare.
-        </p>
-    </footer>
-    <div id="gdpr-banner" class="gdpr-banner" style="display:none;">
-        <p class="gdpr-text">
-            Folosim cookie-uri pentru funcționalitate și îmbunătățirea serviciului.
-            Prin continuarea navigării ești de acord cu
-            <a href="/privacy" class="gdpr-link">Politica de Confidențialitate</a>.
-        </p>
-        <div class="gdpr-butoane">
-            <a href="/privacy" class="gdpr-btn gdpr-btn-secondary">Află mai mult</a>
-            <button onclick="acceptGDPR()" class="gdpr-btn gdpr-btn-primary">Accept</button>
-        </div>
+
+<div class="ticker-wrap">
+    <div class="ticker-label">LIVE</div>
+    <div class="ticker-track" id="tickerTrack">
+        <span class="t-item" style="color:var(--muted)">Se încarcă prețuri...</span>
     </div>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</div>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<footer>
+    <p>© 2026 PretAlert.ro — Monitorizare prețuri România</p>
+    <p style="margin-top:.4rem;">
+        <a href="/despre">Despre</a>
+        &nbsp;·&nbsp;
+        <a href="/contact">Contact</a>
+        &nbsp;·&nbsp;
+        <a href="/privacy">Confidențialitate</a>
+        &nbsp;·&nbsp;
+        <a href="/terms">Termeni</a>
+        &nbsp;·&nbsp;
+        <a href="https://anpc.ro" target="_blank" rel="noopener">ANPC</a>
+    </p>
+    <p class="footer-disclaimer">
+        Site-ul poate conține linkuri de afiliere. Prețurile sunt informative — verifică magazinul înainte de cumpărare.
+    </p>
+</footer>
+
+<div id="gdpr-banner" class="gdpr-banner" style="display:none;">
+    <p class="gdpr-text">
+        Folosim cookie-uri pentru funcționalitate și îmbunătățirea serviciului.
+        Prin continuarea navigării ești de acord cu
+        <a href="/privacy" class="gdpr-link">Politica de Confidențialitate</a>.
+    </p>
+    <div class="gdpr-butoane">
+        <a href="/privacy" class="gdpr-btn gdpr-btn-secondary">Află mai mult</a>
+        <button onclick="acceptGDPR()" class="gdpr-btn gdpr-btn-primary">Accept</button>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -1,3 +1,25 @@
+/* ── TICKER LIVE ─────────────────────────────────────────── */
+(function initTicker() {
+    var track = document.getElementById('tickerTrack');
+    if (!track) return;
+    fetch('/api/ticker')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var produse = data.produse || [];
+            if (!produse.length) return;
+            var content = produse.map(function(p) {
+                var pret = Number(p.pret_curent).toLocaleString('ro-RO', {
+                    minimumFractionDigits: 2, maximumFractionDigits: 2
+                });
+                var nume = p.nume.length > 50 ? p.nume.substring(0, 50) + '…' : p.nume;
+                return '<span class="t-item">' + nume + ': <b>' + pret + ' Lei</b></span>';
+            }).join('');
+            track.innerHTML = content + content;
+            track.classList.add('animated');
+        })
+        .catch(function() {});
+})();
+
 // GDPR consent banner
 (function () {
     if (!localStorage.getItem('gdpr_accepted')) {
